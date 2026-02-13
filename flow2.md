@@ -25,7 +25,7 @@ flowchart TB
   %% =======================
   %% Catalog options
   %% =======================
-  subgraph CAT[Catalog / Metastore Layer (choose 1 or combine)]
+  subgraph CAT[Catalog / Metastore Layer -choose 1 or combine]
     HMS[(Hive Metastore)]
     NESSIE[(Nessie Catalog)]
     POLARIS[(Polaris REST Catalog)]
@@ -35,18 +35,18 @@ flowchart TB
   %% Governance / UI (optional but common)
   %% =======================
   subgraph GOV[Governance & UI Layer]
-    AUTHZ[AuthZ/Policy Engine\n(Ranger/OpenFGA/custom)]
-    IAM[AuthN/IAM\n(OIDC/LDAP/Kerberos)]
-    AUDIT[Audit Logs\n(SIEM/ELK/Splunk)]
-    UI[Metadata UI\n(DataHub/OpenMetadata)]
+    AUTHZ[AuthZ/Policy Engine\n-Ranger/OpenFGA/custom]
+    IAM[AuthN/IAM\n-OIDC/LDAP/Kerberos]
+    AUDIT[Audit Logs\n-SIEM/ELK/Splunk]
+    UI[Metadata UI\n-DataHub/OpenMetadata]
   end
 
   %% =======================
   %% Storage
   %% =======================
   subgraph STOR[Storage]
-    OBJ[(S3-Compatible Object Store\n(ECS/NetApp/MinIO/etc.))]
-    WH[(Warehouse path\n(Iceberg data+metadata files))]
+    OBJ[(S3-Compatible Object Store\n-ECS/NetApp/MinIO/etc.)]
+    WH[(Warehouse path\n-Iceberg data+metadata files)]
   end
 
   %% =======================
