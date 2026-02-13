@@ -4,12 +4,12 @@ flowchart TB
   %% Actors / Use-cases
   %% =======================
   subgraph UC[Use cases]
-    UC1[Legacy Hive queries\n(read existing tables)]
-    UC2[Legacy Hive writes\n(optional, usually constrained)]
-    UC3[New ingestion\n(Spark/Flink)]
-    UC4[Interactive queries\n(Trino/Spark SQL)]
-    UC5[Dev/UAT isolation\n(branches / environments)]
-    UC6[Governance & audit\n(RBAC, policies, logs)]
+    UC1[Legacy Hive queries\n-read existing tables]
+    UC2[Legacy Hive writes\n-optional, usually constrained]
+    UC3[New ingestion\n-Spark/Flink]
+    UC4[Interactive queries\n-Trino/Spark SQL-]
+    UC5[Dev/UAT isolation\n-branches / environments-]
+    UC6[Governance & audit\n-RBAC, policies, logs-]
   end
 
   %% =======================
