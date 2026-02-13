@@ -9,7 +9,7 @@ flowchart LR
   end
 
   subgraph HMS_LAYER["Hive Metastore (HMS)"]
-    HMS[(HMS DB\n(table name → metadata location))]
+    HMS[(HMS DB\n -table name → metadata location)]
   end
 
   subgraph POLARIS_LAYER["Apache Polaris"]
