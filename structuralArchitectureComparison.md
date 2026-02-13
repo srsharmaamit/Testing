@@ -17,7 +17,7 @@ flowchart LR
   end
 
   subgraph NESSIE_LAYER["Project Nessie"]
-    NESSIE[(Versioned Catalog\n(branches + commits))]
+    NESSIE[(Versioned Catalog\n- branches + commits)]
   end
 
   subgraph STORAGE["Object Store"]
