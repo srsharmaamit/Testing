@@ -1,3 +1,4 @@
+```mermaid
 flowchart TB
   %% =======================
   %% Actors / Use-cases
@@ -109,3 +110,5 @@ flowchart TB
   INPUTS --> GOV
   INPUTS --> CE
   INPUTS --> STOR
+
+```
