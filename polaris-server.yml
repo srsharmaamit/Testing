@@ -1,0 +1,141 @@
+#
+# Copyright (c) 2024 Snowflake Computing Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# Polaris Server Configuration for PoC
+
+# Server settings
+server:
+  applicationConnectors:
+    - type: http
+      port: 8181
+      # Increase timeout for large metadata operations
+      idleTimeout: 60s
+  
+  adminConnectors:
+    - type: http
+      port: 8182
+  
+  # Request logging
+  requestLog:
+    appenders:
+      - type: console
+        layout:
+          type: json
+
+# Metadata storage backend (PostgreSQL)
+metaStoreManager:
+  type: eclipse-link
+  conf:
+    # PostgreSQL connection settings
+    persistence-unit: polaris
+    
+    # Connection pool settings
+    eclipselink.jdbc.connections.initial: 5
+    eclipselink.jdbc.connections.min: 5
+    eclipselink.jdbc.connections.max: 20
+    
+    # Database configuration
+    javax.persistence.jdbc.driver: org.postgresql.Driver
+    javax.persistence.jdbc.url: jdbc:postgresql://postgres:5432/polaris_db
+    javax.persistence.jdbc.user: polaris
+    javax.persistence.jdbc.password: polaris123
+    
+    # Schema management
+    eclipselink.ddl-generation: create-or-extend-tables
+    eclipselink.ddl-generation.output-mode: database
+    
+    # Logging
+    eclipselink.logging.level: INFO
+    eclipselink.logging.parameters: true
+
+# Default realm for authentication
+defaultRealms:
+  - default-realm
+
+# OAuth2 configuration (test mode for PoC)
+oauth2:
+  type: test
+  # In production, use real OAuth2 provider
+
+# Feature flags
+featureConfiguration:
+  # Disable credential rotation checking for PoC
+  ENFORCE_PRINCIPAL_CREDENTIAL_ROTATION_REQUIRED_CHECKING: false
+  
+  # Enable audit logging
+  ENABLE_AUDIT_LOGGING: true
+  
+  # Support for Iceberg REST spec
+  SUPPORTED_CATALOG_STORAGE_TYPES:
+    - S3
+    - FILE
+
+# Audit logging configuration
+auditLog:
+  appenders:
+    - type: file
+      currentLogFilename: /tmp/polaris-audit.log
+      archivedLogFilenamePattern: /tmp/polaris-audit-%d.log.gz
+      archivedFileCount: 7
+      layout:
+        type: json
+        timestampFormat: "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+
+# Metrics configuration
+metrics:
+  frequency: 1 minute
+  reporters:
+    - type: console
+      timeZone: UTC
+      output: stdout
+
+# CORS configuration (for web UI access)
+cors:
+  enabled: true
+  allowedOrigins:
+    - "*"
+  allowedMethods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - OPTIONS
+  allowedHeaders:
+    - "*"
+  exposedHeaders:
+    - "*"
+
+# Logging
+logging:
+  level: INFO
+  loggers:
+    org.apache.polaris: DEBUG
+    org.apache.iceberg: INFO
+    
+  appenders:
+    - type: console
+      threshold: ALL
+      layout:
+        type: pattern
+        pattern: "%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n"
+    
+    - type: file
+      currentLogFilename: /tmp/polaris-server.log
+      archivedLogFilenamePattern: /tmp/polaris-server-%d.log.gz
+      archivedFileCount: 5
+      layout:
+        type: pattern
+        pattern: "%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n"
