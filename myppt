@@ -1,177 +1,112 @@
-## PROMPT START
+Create a 3-slide PowerPoint for banking executives about our modern data catalog architecture. Highly visual, minimal text, focused on business value.
 
-Create a professional PowerPoint presentation for a banking executive audience about our modern data catalog architecture. The presentation should be **2-3 slides maximum**, highly visual, and focused on business value rather than technical implementation details.
-
-### Slide 1: "The Problem & Our Solution"
-
-**Layout:** Split slide with problem on left, solution on right
-
-**Left Side - THE PROBLEM:**
-- Title: "Current State: Legacy Data Catalog Risks"
-- Use a **warning triangle icon** or **red alert symbol** at the top
-- Below, create **3 stacked rounded rectangles** showing pain points:
-  1. Rectangle with **broken chain icon**: "Single Point of Failure - HMS outages impact 200+ data engineers"
-  2. Rectangle with **no entry icon**: "No Audit Trail - 8-hour incident recovery due to unauthorized table drop"
-  3. Rectangle with **old computer icon**: "Legacy Infrastructure - Physical servers, not containerized"
-- Use **red/orange color scheme** for problem side
-
-**Right Side - THE SOLUTION:**
-- Title: "Modern Catalog: Secure, Scalable, Containerized"
-- Use a **green checkmark icon** or **shield icon** at the top
-- Create **3 stacked rounded rectangles** showing benefits:
-  1. Rectangle with **multiple connected nodes icon**: "Multi-Catalog Architecture - No single point of failure"
-  2. Rectangle with **document with checkmarks icon**: "Complete Audit Trail - Compliance-ready tracking"
-  3. Rectangle with **container/box icon**: "Cloud-Native - Docker/Kubernetes ready"
-- Use **green/blue color scheme** for solution side
-
-**Visual Style:**
-- Clean, modern design
-- Use icons from Microsoft's icon library or simple geometric shapes
-- Plenty of white space
-- Professional banking color palette (navy blue, green, gray accents)
+**Design:** Navy blue (#1B365D), teal (#00A896), orange accents (#FF6B35). Use icons over text. Minimum 14pt fonts. Professional, clean, plenty of white space.
 
 ---
 
-### Slide 2: "Architecture Overview - How It Works"
+### Slide 1: "Problem vs Solution"
 
-**Layout:** Visual architecture diagram with numbered workflow
+**Split layout:** Left = problems (red/orange), Right = solutions (green/blue)
+
+**LEFT - Current State Problems:**
+- Title: "Legacy Data Catalog Risks"
+- Warning triangle icon at top
+- 3 stacked rounded rectangles:
+  1. Broken chain icon: "Single Point of Failure - HMS outages impact 200+ engineers"
+  2. No entry icon: "No Audit Trail - 8hr recovery from unauthorized table drop"
+  3. Old computer icon: "Legacy Infrastructure - Physical servers, not containerized"
+
+**RIGHT - Our Solution:**
+- Title: "Modern Catalog: Secure, Scalable, Containerized"
+- Shield/checkmark icon at top
+- 3 stacked rounded rectangles:
+  1. Connected nodes icon: "Multi-Catalog Architecture - No single point of failure"
+  2. Document checkmarks icon: "Complete Audit Trail - Compliance-ready"
+  3. Container icon: "Cloud-Native - Docker/Kubernetes ready"
+
+---
+
+### Slide 2: "Architecture - How It Works"
 
 **Title:** "Unified Catalog Architecture"
 
-**Create a layered architecture diagram using PowerPoint shapes:**
+**Layered diagram using PowerPoint shapes:**
 
-**Top Layer (Governance):**
-- Large rounded rectangle spanning the width
+**TOP LAYER - Governance (light gray):**
+- Wide rounded rectangle
 - Label: "Audit & Compliance Layer"
-- Inside, use 3 small document icons labeled: "Catalog Logs" | "Query Logs" | "Storage Logs"
-- Color: Light gray background, dark text
+- 3 document icons: "Catalog Logs" | "Query Logs" | "Storage Logs"
 
-**Middle Layer (Catalog Management):**
-- Large rounded rectangle below governance layer
+**MIDDLE LAYER - Catalog (navy blue, white text):**
+- Wide rounded rectangle
 - Label: "Gravitino - Unified Catalog Management"
-- Inside, create 3 connected boxes:
-  - Left box with **database cylinder icon**: "Polaris (Production Iceberg)"
-  - Middle box with **git branch icon**: "Nessie (Migration Staging)"
-  - Right box with **filing cabinet icon**: "HMS (Legacy - Being Phased Out)"
-- Use **connecting arrows** between these boxes showing data flow
-- Color: Navy blue background, white text
+- 3 connected boxes with arrows:
+  - Database cylinder icon: "Polaris (Production Iceberg)"
+  - Git branch icon: "Nessie (Migration Staging)"
+  - Filing cabinet icon: "HMS (Legacy - Phasing Out)"
 
-**Bottom Layer (Compute & Storage):**
-- Split into two sections:
-  
-  **Left section:**
-  - Rounded rectangle labeled "Compute"
-  - **Lightning bolt icon** + "Apache Spark"
-  - **notebook icon** + "Jupyter"
-  - Color: Teal/blue
-  
-  **Right section:**
-  - Rounded rectangle labeled "Storage"
-  - **Two bucket icons** side by side:
-    - "Tenant A Bucket" (with **store/shop icon**)
-    - "Tenant B Bucket" (with **office building icon**)
-  - Small text below: "NetApp StorageGRID (S3-Compatible)"
-  - Color: Green
+**BOTTOM LAYER - Split into two:**
 
-**Add numbered workflow arrows (1-4) showing:**
-1. Arrow from Compute → Gravitino: "1. Request table metadata"
-2. Arrow from Gravitino → Polaris: "2. Route to appropriate catalog"
-3. Arrow from Polaris → Storage: "3. Return data location"
-4. Arrow from Compute → Storage: "4. Access data directly"
+Left box (teal) - "Compute":
+- Lightning icon: "Apache Spark"
+- Notebook icon: "Jupyter"
 
-**Visual Style:**
-- Use subtle drop shadows on rectangles
-- Consistent rounded corners
-- Clear, legible fonts (minimum 14pt)
-- Color-code different layers
+Right box (green) - "Storage":
+- 2 bucket icons side-by-side:
+  - "Tenant A Bucket" (store icon)
+  - "Tenant B Bucket" (office icon)
+- Below: "NetApp StorageGRID (S3)"
+
+**Numbered workflow arrows (1-4):**
+1. Compute → Gravitino: "Request metadata"
+2. Gravitino → Polaris: "Route to catalog"
+3. Polaris → Storage: "Return location"
+4. Compute → Storage: "Access data"
+
+Use drop shadows, rounded corners, color-code each layer.
 
 ---
 
-### Slide 3: "Business Value & Tenant Isolation"
+### Slide 3: "Business Value & Security"
 
-**Layout:** Two-column layout with value props and isolation demo
+**Two-column layout:**
 
-**Left Column - BUSINESS VALUE (40% of slide):**
+**LEFT (40%) - Business Value:**
 - Title: "What This Means for the Bank"
-- Create **4 benefit cards** (small rounded rectangles stacked vertically):
-  
-  1. **Shield icon** + "Risk Mitigation"
-     - Subtext: "Zero-downtime migration path"
-  
-  2. **Clock with arrow icon** + "Time Travel"
-     - Subtext: "Regulatory point-in-time queries"
-  
-  3. **Lock icon** + "Tenant Isolation"
-     - Subtext: "Retail & Investment units fully segregated"
-  
-  4. **Cloud icon** + "Modern Infrastructure"
-     - Subtext: "Containerized, Kubernetes-ready"
+- 4 benefit cards (rounded rectangles):
+  1. Shield icon: "Risk Mitigation" - "Zero-downtime migration"
+  2. Clock-arrow icon: "Time Travel" - "Regulatory point-in-time queries"
+  3. Lock icon: "Tenant Isolation" - "Retail & Investment units segregated"
+  4. Cloud icon: "Modern Infrastructure" - "Containerized, K8s-ready"
 
-**Right Column - TENANT ISOLATION VISUAL (60% of slide):**
+**RIGHT (60%) - Tenant Isolation Visual:**
 - Title: "Multi-Tenant Security Model"
-- Create a **visual diagram showing isolation:**
 
-  **Top section:**
-  - Rounded rectangle: "Shared Gravitino Platform"
-  - Inside, two separate boxes:
-    - Left box with **store icon**: "Retail Banking Namespace"
-      - Mini icons: customers table, transactions table, risk models table
-    - Right box with **office icon**: "Investment Banking Namespace"
-      - Mini icons: portfolios table, trades table, market data table
-  - **Red barrier/wall icon** between the two boxes
-  - Text: "Access Control Enforced"
+**Top section:**
+- Rounded rectangle: "Shared Gravitino Platform"
+- Inside, 2 boxes with RED BARRIER between them:
+  - Left (store icon): "Retail Banking" - mini icons for customers, transactions, risk tables
+  - Right (office icon): "Investment Banking" - mini icons for portfolios, trades, market tables
+- Text: "Access Control Enforced"
 
-  **Bottom section:**
-  - Two separate storage buckets:
-    - Left: "tenant-a-bucket" (with **store icon**)
-    - Right: "tenant-b-bucket" (with **office icon**)
-  - **Padlock icons** on each bucket
-  - Arrows from namespaces to respective buckets
-  - Text below: "Storage-Level Isolation via S3 Bucket Policies"
+**Bottom section:**
+- 2 separate storage buckets with padlock icons:
+  - "tenant-a-bucket" (store icon)
+  - "tenant-b-bucket" (office icon)
+- Arrows from namespaces to buckets
+- Text: "Storage-Level Isolation via S3 Policies"
 
-**Visual Style:**
-- Use **green for allowed access**, **red for denied access**
-- Clear separation between tenants
-- Professional iconography
+Use green for allowed, red for denied access.
 
 ---
 
-### Overall Presentation Guidelines:
+**Footer:** "Confidential - Internal Use Only | Modern Data Catalog PoC"
 
-**Design Principles:**
-1. **Minimal text** - Use icons and visuals to tell the story
-2. **Consistent color palette:**
-   - Primary: Navy Blue (#1B365D)
-   - Secondary: Teal/Green (#00A896)
-   - Accent: Orange for warnings (#FF6B35)
-   - Neutral: Light Gray (#F4F4F4)
-3. **Professional typography:**
-   - Headers: Calibri Bold or Segoe UI Bold, 28-36pt
-   - Body: Calibri or Segoe UI, 16-20pt
-   - Labels: 14pt minimum
-4. **Icons over clipart** - Use simple, professional icons
-5. **White space** - Don't crowd the slides
-6. **Accessibility** - High contrast, readable fonts
+**Animations (optional):** Slide 2 workflow arrows appear sequentially. Slide 3 barrier animates for emphasis.
 
-**Animations (Optional):**
-- Slide 2: Animate workflow arrows (1→2→3→4) to appear sequentially
-- Slide 3: Animate the barrier/wall between tenants for emphasis
+**Speaker notes:** Include stats - "10,000+ tables", "200+ engineers", "Zero production impact"
 
-**Notes Section (for presenter):**
-- Add brief talking points under each slide
-- Include statistics: "10,000+ tables", "200+ data engineers", "Zero production impact"
-
----
-
-## Additional Instructions for Copilot:
-
-- Use only **built-in PowerPoint shapes** (rectangles, circles, arrows, icons from Insert > Icons)
-- **No code snippets or terminal commands**
-- **No detailed technical jargon** - this is for business stakeholders
-- Focus on **visual storytelling**
-- Ensure all text is **large enough to read from 10 feet away**
-- Use **SmartArt** where appropriate for processes/hierarchies
-- Add a **simple footer** with: "Confidential - Internal Use Only | Modern Data Catalog PoC"
+Use only built-in PowerPoint shapes and icons. No code, no jargon. Visual storytelling for executives.
 
 ## PROMPT END
 
@@ -220,4 +155,3 @@ A **2-3 slide PowerPoint** that:
 - ✅ Emphasizes business value over technical complexity
 - ✅ Can be presented in 5-7 minutes
 - ✅ Leaves stakeholders confident in the approach
-
