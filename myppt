@@ -1,0 +1,223 @@
+## PROMPT START
+
+Create a professional PowerPoint presentation for a banking executive audience about our modern data catalog architecture. The presentation should be **2-3 slides maximum**, highly visual, and focused on business value rather than technical implementation details.
+
+### Slide 1: "The Problem & Our Solution"
+
+**Layout:** Split slide with problem on left, solution on right
+
+**Left Side - THE PROBLEM:**
+- Title: "Current State: Legacy Data Catalog Risks"
+- Use a **warning triangle icon** or **red alert symbol** at the top
+- Below, create **3 stacked rounded rectangles** showing pain points:
+  1. Rectangle with **broken chain icon**: "Single Point of Failure - HMS outages impact 200+ data engineers"
+  2. Rectangle with **no entry icon**: "No Audit Trail - 8-hour incident recovery due to unauthorized table drop"
+  3. Rectangle with **old computer icon**: "Legacy Infrastructure - Physical servers, not containerized"
+- Use **red/orange color scheme** for problem side
+
+**Right Side - THE SOLUTION:**
+- Title: "Modern Catalog: Secure, Scalable, Containerized"
+- Use a **green checkmark icon** or **shield icon** at the top
+- Create **3 stacked rounded rectangles** showing benefits:
+  1. Rectangle with **multiple connected nodes icon**: "Multi-Catalog Architecture - No single point of failure"
+  2. Rectangle with **document with checkmarks icon**: "Complete Audit Trail - Compliance-ready tracking"
+  3. Rectangle with **container/box icon**: "Cloud-Native - Docker/Kubernetes ready"
+- Use **green/blue color scheme** for solution side
+
+**Visual Style:**
+- Clean, modern design
+- Use icons from Microsoft's icon library or simple geometric shapes
+- Plenty of white space
+- Professional banking color palette (navy blue, green, gray accents)
+
+---
+
+### Slide 2: "Architecture Overview - How It Works"
+
+**Layout:** Visual architecture diagram with numbered workflow
+
+**Title:** "Unified Catalog Architecture"
+
+**Create a layered architecture diagram using PowerPoint shapes:**
+
+**Top Layer (Governance):**
+- Large rounded rectangle spanning the width
+- Label: "Audit & Compliance Layer"
+- Inside, use 3 small document icons labeled: "Catalog Logs" | "Query Logs" | "Storage Logs"
+- Color: Light gray background, dark text
+
+**Middle Layer (Catalog Management):**
+- Large rounded rectangle below governance layer
+- Label: "Gravitino - Unified Catalog Management"
+- Inside, create 3 connected boxes:
+  - Left box with **database cylinder icon**: "Polaris (Production Iceberg)"
+  - Middle box with **git branch icon**: "Nessie (Migration Staging)"
+  - Right box with **filing cabinet icon**: "HMS (Legacy - Being Phased Out)"
+- Use **connecting arrows** between these boxes showing data flow
+- Color: Navy blue background, white text
+
+**Bottom Layer (Compute & Storage):**
+- Split into two sections:
+  
+  **Left section:**
+  - Rounded rectangle labeled "Compute"
+  - **Lightning bolt icon** + "Apache Spark"
+  - **notebook icon** + "Jupyter"
+  - Color: Teal/blue
+  
+  **Right section:**
+  - Rounded rectangle labeled "Storage"
+  - **Two bucket icons** side by side:
+    - "Tenant A Bucket" (with **store/shop icon**)
+    - "Tenant B Bucket" (with **office building icon**)
+  - Small text below: "NetApp StorageGRID (S3-Compatible)"
+  - Color: Green
+
+**Add numbered workflow arrows (1-4) showing:**
+1. Arrow from Compute → Gravitino: "1. Request table metadata"
+2. Arrow from Gravitino → Polaris: "2. Route to appropriate catalog"
+3. Arrow from Polaris → Storage: "3. Return data location"
+4. Arrow from Compute → Storage: "4. Access data directly"
+
+**Visual Style:**
+- Use subtle drop shadows on rectangles
+- Consistent rounded corners
+- Clear, legible fonts (minimum 14pt)
+- Color-code different layers
+
+---
+
+### Slide 3: "Business Value & Tenant Isolation"
+
+**Layout:** Two-column layout with value props and isolation demo
+
+**Left Column - BUSINESS VALUE (40% of slide):**
+- Title: "What This Means for the Bank"
+- Create **4 benefit cards** (small rounded rectangles stacked vertically):
+  
+  1. **Shield icon** + "Risk Mitigation"
+     - Subtext: "Zero-downtime migration path"
+  
+  2. **Clock with arrow icon** + "Time Travel"
+     - Subtext: "Regulatory point-in-time queries"
+  
+  3. **Lock icon** + "Tenant Isolation"
+     - Subtext: "Retail & Investment units fully segregated"
+  
+  4. **Cloud icon** + "Modern Infrastructure"
+     - Subtext: "Containerized, Kubernetes-ready"
+
+**Right Column - TENANT ISOLATION VISUAL (60% of slide):**
+- Title: "Multi-Tenant Security Model"
+- Create a **visual diagram showing isolation:**
+
+  **Top section:**
+  - Rounded rectangle: "Shared Gravitino Platform"
+  - Inside, two separate boxes:
+    - Left box with **store icon**: "Retail Banking Namespace"
+      - Mini icons: customers table, transactions table, risk models table
+    - Right box with **office icon**: "Investment Banking Namespace"
+      - Mini icons: portfolios table, trades table, market data table
+  - **Red barrier/wall icon** between the two boxes
+  - Text: "Access Control Enforced"
+
+  **Bottom section:**
+  - Two separate storage buckets:
+    - Left: "tenant-a-bucket" (with **store icon**)
+    - Right: "tenant-b-bucket" (with **office icon**)
+  - **Padlock icons** on each bucket
+  - Arrows from namespaces to respective buckets
+  - Text below: "Storage-Level Isolation via S3 Bucket Policies"
+
+**Visual Style:**
+- Use **green for allowed access**, **red for denied access**
+- Clear separation between tenants
+- Professional iconography
+
+---
+
+### Overall Presentation Guidelines:
+
+**Design Principles:**
+1. **Minimal text** - Use icons and visuals to tell the story
+2. **Consistent color palette:**
+   - Primary: Navy Blue (#1B365D)
+   - Secondary: Teal/Green (#00A896)
+   - Accent: Orange for warnings (#FF6B35)
+   - Neutral: Light Gray (#F4F4F4)
+3. **Professional typography:**
+   - Headers: Calibri Bold or Segoe UI Bold, 28-36pt
+   - Body: Calibri or Segoe UI, 16-20pt
+   - Labels: 14pt minimum
+4. **Icons over clipart** - Use simple, professional icons
+5. **White space** - Don't crowd the slides
+6. **Accessibility** - High contrast, readable fonts
+
+**Animations (Optional):**
+- Slide 2: Animate workflow arrows (1→2→3→4) to appear sequentially
+- Slide 3: Animate the barrier/wall between tenants for emphasis
+
+**Notes Section (for presenter):**
+- Add brief talking points under each slide
+- Include statistics: "10,000+ tables", "200+ data engineers", "Zero production impact"
+
+---
+
+## Additional Instructions for Copilot:
+
+- Use only **built-in PowerPoint shapes** (rectangles, circles, arrows, icons from Insert > Icons)
+- **No code snippets or terminal commands**
+- **No detailed technical jargon** - this is for business stakeholders
+- Focus on **visual storytelling**
+- Ensure all text is **large enough to read from 10 feet away**
+- Use **SmartArt** where appropriate for processes/hierarchies
+- Add a **simple footer** with: "Confidential - Internal Use Only | Modern Data Catalog PoC"
+
+## PROMPT END
+
+---
+
+## How to Use This Prompt:
+
+1. **Copy everything between "PROMPT START" and "PROMPT END"**
+2. **Paste into Microsoft Copilot** in PowerPoint:
+   - Open PowerPoint
+   - Click the Copilot button
+   - Select "Create presentation from prompt"
+   - Paste the prompt
+3. **Review and refine** the generated slides
+4. **Customize** with your bank's branding (logo, colors)
+
+---
+
+## Alternative: If Using ChatGPT/Claude for Slide Content
+
+Ask the AI to generate:
+1. **Detailed slide layout descriptions** (you build manually in PPT)
+2. **Speaker notes** for each slide
+3. **Suggested icons** from Microsoft's icon library
+
+Then use PowerPoint's Designer feature to apply professional layouts.
+
+---
+
+## Tips for Maximum Impact:
+
+1. **Rehearse the presentation** - 2-3 slides should take 5-7 minutes
+2. **Focus on business outcomes**, not technical features
+3. **Use the architecture diagram** (Slide 2) as your anchor - refer back to it
+4. **Emphasize tenant isolation** - this resonates with banking security teams
+5. **Be ready to answer**: "What's the migration timeline?" and "What if Gravitino fails?"
+
+---
+
+## Expected Output:
+
+A **2-3 slide PowerPoint** that:
+- ✅ Looks professionally designed (not DIY)
+- ✅ Uses visual hierarchy and iconography
+- ✅ Explains complex architecture simply
+- ✅ Emphasizes business value over technical complexity
+- ✅ Can be presented in 5-7 minutes
+- ✅ Leaves stakeholders confident in the approach
+
