@@ -1,0 +1,2033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apache Gravitino - Unified Metadata Lake</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Mono:wght@400;700&family=Crimson+Pro:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0e15;
+            --bg-card: #151922;
+            --bg-card-hover: #1d2330;
+            --accent-blue: #00d4ff;
+            --accent-orange: #ff6b35;
+            --accent-green: #00ff88;
+            --accent-red: #ff3366;
+            --accent-purple: #bd93f9;
+            --text-primary: #e8eaed;
+            --text-secondary: #9ca3af;
+            --border: #2d3748;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 2rem;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-family: 'Crimson Pro', serif;
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 1rem 2rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .tab:hover {
+            color: var(--accent-blue);
+        }
+
+        .tab.active {
+            color: var(--accent-blue);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent-blue);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .diagram-section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .diagram-section:hover {
+            border-color: var(--accent-blue);
+            box-shadow: 0 8px 32px rgba(0, 212, 255, 0.1);
+        }
+
+        .section-title {
+            font-family: 'Crimson Pro', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .section-title::before {
+            content: '▸';
+            font-size: 1.5rem;
+        }
+
+        .architecture-diagram {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .arch-component {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(189, 147, 249, 0.05));
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .arch-component:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-blue);
+            box-shadow: 0 8px 24px rgba(0, 212, 255, 0.2);
+        }
+
+        .arch-component-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: var(--accent-blue);
+        }
+
+        .arch-component-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .flow-box {
+            background: var(--bg-card-hover);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 1.5rem;
+            min-width: 200px;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .flow-box:hover {
+            transform: scale(1.05);
+            border-color: var(--accent-green);
+        }
+
+        .flow-box.highlight {
+            border-color: var(--accent-green);
+            background: rgba(0, 255, 136, 0.05);
+        }
+
+        .flow-arrow {
+            font-size: 2rem;
+            color: var(--accent-blue);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .benefit-card {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 212, 255, 0.05));
+            border: 2px solid var(--accent-green);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .benefit-card::before {
+            content: '✓';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 2rem;
+            opacity: 0.2;
+            color: var(--accent-green);
+        }
+
+        .benefit-card:hover {
+            transform: translateX(4px);
+            border-color: var(--accent-blue);
+            box-shadow: 0 4px 16px rgba(0, 212, 255, 0.3);
+        }
+
+        .benefit-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            color: var(--accent-green);
+        }
+
+        .benefit-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            background: var(--bg-card-hover);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .comparison-table th {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(189, 147, 249, 0.2));
+            padding: 1rem;
+            text-align: left;
+            font-weight: 700;
+            color: var(--accent-blue);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .comparison-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .comparison-table tr:hover {
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .check {
+            color: var(--accent-green);
+            font-weight: 700;
+        }
+
+        .cross {
+            color: var(--accent-red);
+            font-weight: 700;
+        }
+
+        .code-block {
+            background: #1a1d29;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--accent-green);
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        .highlight-text {
+            background: rgba(0, 212, 255, 0.2);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 700;
+            color: var(--accent-blue);
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 212, 255, 0.05));
+            border-left: 4px solid var(--accent-green);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 8px;
+        }
+
+        .info-box-title {
+            font-weight: 700;
+            color: var(--accent-green);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(255, 107, 53, 0.05));
+            border-left: 4px solid var(--accent-orange);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 8px;
+        }
+
+        .warning-box-title {
+            font-weight: 700;
+            color: var(--accent-orange);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                width: 0;
+            }
+            to {
+                width: 100%;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .visual-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .flow-layer {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .vertical-arrow {
+            text-align: center;
+            font-size: 2rem;
+            color: var(--accent-blue);
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .metalake-diagram {
+            background: var(--bg-card-hover);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .metalake-layer {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin: 1.5rem 0;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .metalake-box {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(189, 147, 249, 0.1));
+            border: 2px solid var(--accent-blue);
+            border-radius: 10px;
+            padding: 1.5rem;
+            min-width: 200px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .metalake-box:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 24px rgba(0, 212, 255, 0.3);
+        }
+
+        .metalake-box.catalog {
+            border-color: var(--accent-green);
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 212, 255, 0.05));
+        }
+
+        .metalake-box.resource {
+            border-color: var(--accent-purple);
+            background: linear-gradient(135deg, rgba(189, 147, 249, 0.1), rgba(0, 212, 255, 0.05));
+        }
+
+        .metalake-box.governance {
+            border-color: var(--accent-orange);
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(255, 107, 53, 0.05));
+        }
+
+        .legend {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        ul {
+            margin-left: 1.5rem;
+            margin-top: 0.5rem;
+        }
+
+        li {
+            margin: 0.5rem 0;
+            color: var(--text-secondary);
+        }
+
+        .connector-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .connector-card {
+            background: var(--bg-card-hover);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .connector-card:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Apache Gravitino</h1>
+        <p class="subtitle">The Unified Metadata Lake - Catalog of Catalogs</p>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('overview')">Overview</button>
+            <button class="tab" onclick="switchTab('architecture')">Architecture</button>
+            <button class="tab" onclick="switchTab('metalake')">Metalake Concept</button>
+            <button class="tab" onclick="switchTab('governance')">Governance & RBAC</button>
+            <button class="tab" onclick="switchTab('connectors')">Connectors & Federation</button>
+            <button class="tab" onclick="switchTab('benefits')">Benefits</button>
+            <button class="tab" onclick="switchTab('comparison')">vs Other Catalogs</button>
+            <button class="tab" onclick="switchTab('use-cases')">Use Cases</button>
+        </div>
+
+        <!-- OVERVIEW TAB -->
+        <div id="overview" class="tab-content active">
+            <div class="diagram-section">
+                <h2 class="section-title">What is Apache Gravitino?</h2>
+                
+                <p style="color: var(--text-secondary); font-size: 1.1rem; line-height: 1.8; margin-bottom: 2rem;">
+                    <span class="highlight-text">Apache Gravitino</span> is a <strong>high-performance, geo-distributed, and federated metadata lake</strong>. Unlike traditional catalogs that manage a single metadata source, Gravitino is a <strong>"Catalog of Catalogs"</strong> - a unified metadata management platform that provides governance and access across <strong>heterogeneous data sources, regions, and clouds</strong>.
+                </p>
+
+                <div class="architecture-diagram">
+                    <div class="arch-component">
+                        <div class="arch-component-title">🌐 Unified Metadata</div>
+                        <div class="arch-component-desc">
+                            Manage diverse metadata through a single model and API: Hive, Iceberg, MySQL, PostgreSQL, HDFS, S3, Kafka, ML models
+                        </div>
+                    </div>
+                    
+                    <div class="arch-component">
+                        <div class="arch-component-title">🔗 Federation First</div>
+                        <div class="arch-component-desc">
+                            Connect to existing catalogs (Polaris, Nessie, Unity) without replacing them - add governance on top
+                        </div>
+                    </div>
+                    
+                    <div class="arch-component">
+                        <div class="arch-component-title">🌍 Geo-Distribution</div>
+                        <div class="arch-component-desc">
+                            Deploy across regions and clouds, share metadata globally while maintaining locality
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-box-title">🚀 Key Innovation: The Metadata Lake</div>
+                    Gravitino introduces the concept of a <strong>Metalake</strong> (metadata lake) - a tenant-like container that manages ALL your metadata across different sources, types, and regions. Think of it as a <strong>data brain</strong>: a structured, queryable, and semantically enriched representation of all your data assets.
+                </div>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">The Gravitino Philosophy</h2>
+                
+                <div class="benefits-grid">
+                    <div class="benefit-card">
+                        <div class="benefit-title">Unified, Not Uniform</div>
+                        <div class="benefit-desc">
+                            Gravitino doesn't force everything into one format. It provides unified APIs while respecting the native capabilities of each source system.
+                        </div>
+                    </div>
+                    
+                    <div class="benefit-card">
+                        <div class="benefit-title">Federation Over Migration</div>
+                        <div class="benefit-desc">
+                            Don't replace your existing catalogs - connect to them! Gravitino federates metadata from Hive Metastore, JDBC databases, cloud-native solutions.
+                        </div>
+                    </div>
+                    
+                    <div class="benefit-card">
+                        <div class="benefit-title">Direct Integration</div>
+                        <div class="benefit-desc">
+                            Changes in Gravitino reflect directly in underlying systems, and vice versa. No passive metadata collection - active management.
+                        </div>
+                    </div>
+                    
+                    <div class="benefit-card">
+                        <div class="benefit-title">Multi-Modality Support</div>
+                        <div class="benefit-desc">
+                            Not just tables! Gravitino manages relational data, files, Kafka topics, and ML models through consistent interfaces.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">What Problems Does Gravitino Solve?</h2>
+                
+                <div class="visual-flow">
+                    <div class="flow-layer">
+                        <div class="flow-box" style="background: rgba(255, 51, 102, 0.05); border-color: var(--accent-red);">
+                            <strong>Problem: Metadata Silos</strong><br>
+                            Different teams use different catalogs<br>
+                            Hive for batch, JDBC for relational, S3 for files<br>
+                            No unified view or governance
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓ Gravitino Solution</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box highlight">
+                            <strong>Unified Metadata Lake</strong><br>
+                            Single API to access all metadata<br>
+                            Consistent governance across sources<br>
+                            Global discovery and lineage
+                        </div>
+                    </div>
+                </div>
+
+                <div class="visual-flow" style="margin-top: 2rem;">
+                    <div class="flow-layer">
+                        <div class="flow-box" style="background: rgba(255, 51, 102, 0.05); border-color: var(--accent-red);">
+                            <strong>Problem: Multi-Cloud Chaos</strong><br>
+                            Data in AWS, Azure, GCP<br>
+                            No unified metadata access<br>
+                            Duplicate governance implementations
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓ Gravitino Solution</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box highlight">
+                            <strong>Geo-Distributed Metadata</strong><br>
+                            Deploy Gravitino in each region<br>
+                            Federate metadata across instances<br>
+                            Global view with local performance
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ARCHITECTURE TAB -->
+        <div id="architecture" class="tab-content">
+            <div class="diagram-section">
+                <h2 class="section-title">Gravitino Layered Architecture</h2>
+                
+                <div class="visual-flow">
+                    <div class="flow-layer">
+                        <div class="flow-box">
+                            <div class="arch-component-title">Query Engines & Applications</div>
+                            <div class="arch-component-desc">Spark • Flink • Trino • Presto • ML Platforms</div>
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box highlight" style="min-width: 400px;">
+                            <div class="arch-component-title">Interface Layer</div>
+                            <div class="arch-component-desc">
+                                <strong>• REST API</strong> (Standard unified interface)<br>
+                                • Iceberg REST API (Full compliance)<br>
+                                • Java SDK<br>
+                                • Python SDK
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box" style="background: rgba(189, 147, 249, 0.1); border-color: var(--accent-purple); min-width: 400px;">
+                            <div class="arch-component-title">Functionality Layer</div>
+                            <div class="arch-component-desc">
+                                <strong>Metadata Management:</strong><br>
+                                • CRUD operations (Create, Read, Update, Delete)<br>
+                                • Schema evolution<br>
+                                • Version control<br><br>
+                                <strong>Governance:</strong><br>
+                                • RBAC (users, roles, privileges)<br>
+                                • Tagging and classification<br>
+                                • Audit logging<br>
+                                • Data lineage tracking<br>
+                                • Policy enforcement
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box" style="background: rgba(0, 212, 255, 0.1); border-color: var(--accent-blue); min-width: 400px;">
+                            <div class="arch-component-title">Core Object Model</div>
+                            <div class="arch-component-desc">
+                                <strong>Unified Metadata Models:</strong><br>
+                                • Relational (tables, views, columns)<br>
+                                • Fileset (files, directories)<br>
+                                • Messaging (Kafka topics)<br>
+                                • ML Models (model metadata, versions)
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box" style="background: rgba(0, 255, 136, 0.1); border-color: var(--accent-green); min-width: 400px;">
+                            <div class="arch-component-title">Connection Layer (Connectors)</div>
+                            <div class="arch-component-desc">
+                                Hive • Iceberg • MySQL • PostgreSQL • Kafka •<br>
+                                HDFS • S3 • GCS • Azure Blob • Paimon • Hudi • OceanBase
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box" style="background: rgba(255, 107, 53, 0.1); border-color: var(--accent-orange);">
+                            <div class="arch-component-title">Underlying Systems</div>
+                            <div class="arch-component-desc">
+                                Hive Metastore • RDBMS • Object Storage • Kafka Clusters •<br>
+                                ML Model Stores • External Catalogs (Polaris, Nessie, Unity)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">How Gravitino Manages Metadata</h2>
+                
+                <div class="architecture-diagram">
+                    <div class="arch-component" style="border-color: var(--accent-green);">
+                        <div class="arch-component-title">Direct Management</div>
+                        <div class="arch-component-desc">
+                            <strong>Unlike passive collectors (DataHub, Atlan):</strong><br><br>
+                            Gravitino <strong>directly manages</strong> underlying systems through connectors<br><br>
+                            Changes in Gravitino → Immediate reflection in source system<br>
+                            Changes in source → Gravitino stays in sync<br><br>
+                            <strong>Example:</strong><br>
+                            CREATE TABLE in Gravitino → Table created in Hive/Iceberg immediately
+                        </div>
+                    </div>
+
+                    <div class="arch-component" style="border-color: var(--accent-purple);">
+                        <div class="arch-component-title">Unified Metadata Models</div>
+                        <div class="arch-component-desc">
+                            <strong>Generic abstraction layer:</strong><br><br>
+                            Different sources → Common metadata model<br><br>
+                            <strong>Relational Model:</strong><br>
+                            Hive table = Iceberg table = MySQL table<br>
+                            (All exposed as "Table" with schema, properties)<br><br>
+                            <strong>File Model:</strong><br>
+                            HDFS directory = S3 prefix = Azure container<br>
+                            (All exposed as "Fileset")
+                        </div>
+                    </div>
+
+                    <div class="arch-component" style="border-color: var(--accent-blue);">
+                        <div class="arch-component-title">Connector Architecture</div>
+                        <div class="arch-component-desc">
+                            <strong>Pluggable connector system:</strong><br><br>
+                            Each connector translates:<br>
+                            • Gravitino API calls → Native system calls<br>
+                            • Native events → Gravitino metadata updates<br><br>
+                            <strong>Bi-directional sync:</strong><br>
+                            Write through Gravitino OR directly to source<br>
+                            Both paths keep metadata consistent
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">Iceberg REST Catalog (IRC) Service</h2>
+                
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                    Gravitino was the <strong>first</strong> to release a production-ready Iceberg REST catalog implementation. The IRC service allows Gravitino to act as a native Iceberg catalog while adding enterprise governance.
+                </p>
+
+                <div class="code-block">
+# Traditional Approach: Direct Iceberg Catalog
+spark.sql.catalog.my_catalog = org.apache.iceberg.spark.SparkCatalog
+spark.sql.catalog.my_catalog.type = rest
+spark.sql.catalog.my_catalog.uri = http://iceberg-rest:8181
+
+# Gravitino IRC Approach: Iceberg + Governance
+spark.sql.catalog.gravitino = org.apache.iceberg.spark.SparkCatalog
+spark.sql.catalog.gravitino.type = rest
+spark.sql.catalog.gravitino.uri = http://gravitino:8090/iceberg
+
+# Now you get:
+# ✓ Standard Iceberg functionality
+# ✓ Gravitino RBAC enforcement
+# ✓ Unified governance across catalogs
+# ✓ Tagging and lineage tracking
+                </div>
+
+                <div class="info-box">
+                    <div class="info-box-title">Federation via IRC</div>
+                    Gravitino IRC can <strong>federate</strong> existing Iceberg catalogs (Hive, JDBC, Nessie, Polaris). This means:<br><br>
+                    • Connect query engines to Gravitino IRC<br>
+                    • Gravitino applies RBAC and governance<br>
+                    • Backend catalog (Nessie, Polaris) handles versioning<br>
+                    • Best of both worlds!
+                </div>
+            </div>
+        </div>
+
+        <!-- METALAKE TAB -->
+        <div id="metalake" class="tab-content">
+            <div class="diagram-section">
+                <h2 class="section-title">Understanding the Metalake</h2>
+                
+                <p style="color: var(--text-secondary); font-size: 1.05rem; margin-bottom: 2rem;">
+                    The <span class="highlight-text">Metalake</span> is Gravitino's core concept - a <strong>tenant-like container</strong> that holds all metadata for an organization, team, or business unit. Think of it as the <strong>root of your metadata universe</strong>.
+                </p>
+
+                <div class="metalake-diagram">
+                    <h3 style="color: var(--accent-blue); margin-bottom: 1.5rem; text-align: center;">Metalake Hierarchy</h3>
+                    
+                    <div class="metalake-layer">
+                        <div class="metalake-box" style="min-width: 300px;">
+                            <strong>Metalake</strong><br>
+                            <small>Top-level container (tenant)</small><br>
+                            <em>Example: "acme_corp"</em>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; color: var(--accent-blue); font-size: 1.5rem; margin: 1rem 0;">
+                        ↓ Contains
+                    </div>
+
+                    <div class="metalake-layer">
+                        <div class="metalake-box catalog">
+                            <strong>Catalog 1</strong><br>
+                            Hive Catalog
+                        </div>
+                        <div class="metalake-box catalog">
+                            <strong>Catalog 2</strong><br>
+                            Iceberg Catalog
+                        </div>
+                        <div class="metalake-box catalog">
+                            <strong>Catalog 3</strong><br>
+                            Kafka Catalog
+                        </div>
+                        <div class="metalake-box catalog">
+                            <strong>Catalog 4</strong><br>
+                            Fileset Catalog
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; color: var(--accent-purple); font-size: 1.5rem; margin: 1rem 0;">
+                        ↓ Contains
+                    </div>
+
+                    <div class="metalake-layer">
+                        <div class="metalake-box resource">
+                            <strong>Schema/Namespace</strong><br>
+                            <small>Logical grouping</small>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; color: var(--accent-orange); font-size: 1.5rem; margin: 1rem 0;">
+                        ↓ Contains
+                    </div>
+
+                    <div class="metalake-layer">
+                        <div class="metalake-box governance">
+                            <strong>Tables</strong>
+                        </div>
+                        <div class="metalake-box governance">
+                            <strong>Filesets</strong>
+                        </div>
+                        <div class="metalake-box governance">
+                            <strong>Topics</strong>
+                        </div>
+                        <div class="metalake-box governance">
+                            <strong>Models</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-block">
+# Example: Creating a Metalake and Catalogs
+
+# 1. Create Metalake
+POST /api/metalakes
+{
+  "name": "acme_corp",
+  "comment": "ACME Corporation metadata lake",
+  "properties": {}
+}
+
+# 2. Create Iceberg Catalog under Metalake
+POST /api/metalakes/acme_corp/catalogs
+{
+  "name": "lakehouse",
+  "type": "RELATIONAL",
+  "provider": "iceberg",
+  "comment": "Production data lakehouse",
+  "properties": {
+    "warehouse": "s3://acme-data-lake/warehouse",
+    "catalog-backend": "hive"
+  }
+}
+
+# 3. Create Fileset Catalog for ML Data
+POST /api/metalakes/acme_corp/catalogs
+{
+  "name": "ml_datasets",
+  "type": "FILESET",
+  "provider": "hadoop",
+  "properties": {
+    "location": "s3://acme-ml/datasets"
+  }
+}
+
+# Result: One metalake managing BOTH Iceberg tables AND filesets
+                </div>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">Metalake Benefits</h2>
+                
+                <div class="benefits-grid">
+                    <div class="benefit-card">
+                        <div class="benefit-title">🏢 Multi-Tenancy</div>
+                        <div class="benefit-desc">
+                            Each metalake is isolated. Perfect for:<br>
+                            • One metalake per business unit<br>
+                            • One metalake per environment (dev, staging, prod)<br>
+                            • One metalake per customer (SaaS providers)
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🌐 Global View</div>
+                        <div class="benefit-desc">
+                            Single metalake can contain catalogs from:<br>
+                            • Different regions (US-EAST, EU-WEST)<br>
+                            • Different clouds (AWS, Azure, GCP)<br>
+                            • Different source types (Hive, Iceberg, Kafka, Files)
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🔐 Unified Governance</div>
+                        <div class="benefit-desc">
+                            RBAC, tagging, and policies apply at the metalake level:<br>
+                            • Define roles once<br>
+                            • Apply across all catalogs<br>
+                            • Consistent access control everywhere
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">📊 Cross-Catalog Queries</div>
+                        <div class="benefit-desc">
+                            Query engines can join data across catalogs:<br>
+                            • Hive table JOIN Iceberg table<br>
+                            • All within same metalake context<br>
+                            • Unified namespace simplifies SQL
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">Real-World Metalake Example</h2>
+                
+                <div class="code-block">
+Metalake: "financial_services_corp"
+│
+├─ Catalog: "production_lakehouse" (Iceberg)
+│   ├─ Schema: "trading"
+│   │   ├─ Table: "trades"
+│   │   ├─ Table: "positions"
+│   │   └─ Table: "market_data"
+│   └─ Schema: "risk"
+│       ├─ Table: "var_calculations"
+│       └─ Table: "stress_tests"
+│
+├─ Catalog: "legacy_warehouse" (Hive)
+│   └─ Schema: "reports"
+│       ├─ Table: "daily_summary"
+│       └─ Table: "monthly_aggregate"
+│
+├─ Catalog: "ml_data" (Fileset)
+│   ├─ Schema: "training_data"
+│   │   ├─ Fileset: "market_images_2024"
+│   │   └─ Fileset: "sentiment_corpus"
+│   └─ Schema: "models"
+│       └─ Fileset: "risk_model_v2"
+│
+└─ Catalog: "event_streams" (Kafka)
+    └─ Schema: "trading_events"
+        ├─ Topic: "trade_executions"
+        ├─ Topic: "order_updates"
+        └─ Topic: "market_ticks"
+
+All accessible through unified Gravitino API!
+All governed by metalake-level RBAC!
+                </div>
+            </div>
+        </div>
+
+        <!-- GOVERNANCE TAB -->
+        <div id="governance" class="tab-content">
+            <div class="diagram-section">
+                <h2 class="section-title">Gravitino RBAC Model</h2>
+                
+                <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.05rem;">
+                    Gravitino implements a <strong>hierarchical RBAC system</strong> similar to traditional database security models, but applied across the entire metadata lake.
+                </p>
+
+                <div class="architecture-diagram">
+                    <div class="arch-component" style="border-color: var(--accent-green);">
+                        <div class="arch-component-title">1. Users</div>
+                        <div class="arch-component-desc">
+                            <strong>Identity Principals:</strong><br><br>
+                            • Added to metalakes explicitly<br>
+                            • Can be individuals or service accounts<br>
+                            • Each user can have multiple roles<br><br>
+                            <strong>Important:</strong> Users must be added to metalake before they can do anything!
+                        </div>
+                    </div>
+
+                    <div class="arch-component" style="border-color: var(--accent-blue);">
+                        <div class="arch-component-title">2. Roles</div>
+                        <div class="arch-component-desc">
+                            <strong>Grouping Mechanism:</strong><br><br>
+                            • Created within a metalake<br>
+                            • Assigned privileges on securable objects<br>
+                            • Granted to users<br><br>
+                            <strong>Example Roles:</strong><br>
+                            • catalog_admin<br>
+                            • data_engineer<br>
+                            • analyst_reader
+                        </div>
+                    </div>
+
+                    <div class="arch-component" style="border-color: var(--accent-purple);">
+                        <div class="arch-component-title">3. Privileges</div>
+                        <div class="arch-component-desc">
+                            <strong>Specific Actions:</strong><br><br>
+                            <strong>Metalake:</strong> CREATE_CATALOG, MANAGE_USERS<br>
+                            <strong>Catalog:</strong> USE_CATALOG, CREATE_SCHEMA<br>
+                            <strong>Schema:</strong> USE_SCHEMA, CREATE_TABLE<br>
+                            <strong>Table:</strong> SELECT_TABLE, MODIFY_TABLE<br>
+                            <strong>Fileset:</strong> READ_FILESET, WRITE_FILESET
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-box-title">Hierarchical Inheritance</div>
+                    <strong>Key Feature:</strong> Privileges are inherited downward in the hierarchy:<br><br>
+                    • Grant USE_CATALOG on a catalog → Automatically applies to all schemas and tables within<br>
+                    • Grant CREATE_TABLE on a schema → User can create tables in that schema<br>
+                    • More specific grants override general ones
+                </div>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">RBAC in Action</h2>
+                
+                <div class="code-block">
+# Scenario: Data Engineering Team Setup
+
+# 1. Add Users to Metalake
+POST /api/metalakes/prod/users
+{
+  "name": "alice@company.com"
+}
+
+POST /api/metalakes/prod/users
+{
+  "name": "bob@company.com"
+}
+
+# 2. Create Roles
+POST /api/metalakes/prod/roles
+{
+  "name": "data_engineer",
+  "properties": {}
+}
+
+# 3. Grant Privileges to Role
+# Grant catalog-level access
+POST /api/metalakes/prod/roles/data_engineer/grants
+{
+  "privilege": "USE_CATALOG",
+  "securableObject": {
+    "type": "CATALOG",
+    "name": "lakehouse"
+  }
+}
+
+# Grant ability to create schemas
+POST /api/metalakes/prod/roles/data_engineer/grants
+{
+  "privilege": "CREATE_SCHEMA",
+  "securableObject": {
+    "type": "CATALOG",
+    "name": "lakehouse"
+  }
+}
+
+# Grant table read/write in specific schema
+POST /api/metalakes/prod/roles/data_engineer/grants
+{
+  "privilege": "SELECT_TABLE",
+  "securableObject": {
+    "type": "SCHEMA",
+    "name": "lakehouse.analytics"
+  }
+}
+
+POST /api/metalakes/prod/roles/data_engineer/grants
+{
+  "privilege": "MODIFY_TABLE",
+  "securableObject": {
+    "type": "SCHEMA",
+    "name": "lakehouse.analytics"
+  }
+}
+
+# 4. Grant Role to Users
+POST /api/metalakes/prod/users/alice@company.com/roles
+{
+  "roleName": "data_engineer"
+}
+
+POST /api/metalakes/prod/users/bob@company.com/roles
+{
+  "roleName": "data_engineer"
+}
+
+# Result: Alice and Bob can:
+# ✓ Use the lakehouse catalog
+# ✓ Create new schemas
+# ✓ Read and modify tables in analytics schema
+# ✗ Cannot modify tables in other schemas
+                </code>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">Securable Objects Hierarchy</h2>
+                
+                <div class="visual-flow">
+                    <div class="flow-layer">
+                        <div class="flow-box" style="background: rgba(0, 212, 255, 0.1); border-color: var(--accent-blue);">
+                            <strong>METALAKE</strong><br>
+                            Privileges: CREATE_CATALOG, MANAGE_USERS, MANAGE_GRANTS
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓ Contains</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box" style="background: rgba(0, 255, 136, 0.1); border-color: var(--accent-green);">
+                            <strong>CATALOG</strong><br>
+                            Privileges: USE_CATALOG, CREATE_SCHEMA, DROP_CATALOG
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓ Contains</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box" style="background: rgba(189, 147, 249, 0.1); border-color: var(--accent-purple);">
+                            <strong>SCHEMA</strong><br>
+                            Privileges: USE_SCHEMA, CREATE_TABLE, CREATE_FILESET, CREATE_TOPIC
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓ Contains</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box governance">
+                            <strong>TABLE</strong><br>
+                            SELECT_TABLE<br>
+                            MODIFY_TABLE
+                        </div>
+                        <div class="flow-box governance">
+                            <strong>FILESET</strong><br>
+                            READ_FILESET<br>
+                            WRITE_FILESET
+                        </div>
+                        <div class="flow-box governance">
+                            <strong>TOPIC</strong><br>
+                            PRODUCE_TOPIC<br>
+                            CONSUME_TOPIC
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">Advanced: Push-Down Permission Management</h2>
+                
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                    Gravitino's <strong>"Push-Down Permission Management"</strong> means that RBAC policies can be <strong>enforced at the source system level</strong>, not just in Gravitino.
+                </p>
+
+                <div class="warning-box">
+                    <div class="warning-box-title">How It Works</div>
+                    When you grant privileges in Gravitino, it can optionally:<br><br>
+                    1. <strong>Store in Gravitino:</strong> Enforce when accessing via Gravitino API<br>
+                    2. <strong>Push to Source:</strong> Create corresponding permissions in Hive/MySQL/etc.<br><br>
+                    This means users accessing data <strong>directly</strong> (bypassing Gravitino) still respect permissions!
+                </div>
+
+                <div class="info-box">
+                    <div class="info-box-title">💡 Enforcement Modes (v1.0.0+)</div>
+                    Prior to v1.0.0, Gravitino could only <strong>define</strong> permissions.<br>
+                    From v1.0.0 onwards, Gravitino <strong>actively enforces</strong> access control when manipulating secure objects.<br><br>
+                    <strong>Enforcement happens when:</strong><br>
+                    • Users create/drop tables via Gravitino API<br>
+                    • Query engines access metadata through Gravitino IRC<br>
+                    • Applications use Gravitino connectors (Spark, Trino, Flink)
+                </div>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">Additional Governance Features</h2>
+                
+                <div class="benefits-grid">
+                    <div class="benefit-card">
+                        <div class="benefit-title">🏷️ Tagging</div>
+                        <div class="benefit-desc">
+                            <strong>Metadata classification:</strong><br>
+                            • Apply tags to tables, columns, filesets<br>
+                            • Examples: "PII", "Financial", "Sensitive"<br>
+                            • Tags can influence access policies<br>
+                            • Track data lineage by tags
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">📝 Audit Logging</div>
+                        <div class="benefit-desc">
+                            <strong>Complete audit trail:</strong><br>
+                            • All metadata operations logged<br>
+                            • User, timestamp, action, result<br>
+                            • Compliance and forensics<br>
+                            • Integration with enterprise SIEM
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🔗 Data Lineage</div>
+                        <div class="benefit-desc">
+                            <strong>End-to-end tracking:</strong><br>
+                            • Capture lineage across operations<br>
+                            • Integrates with Marquez (OpenLineage)<br>
+                            • Understand data flow and dependencies<br>
+                            • Impact analysis for changes
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">📊 Policy System (v1.0.0+)</div>
+                        <div class="benefit-desc">
+                            <strong>Metadata-driven automation:</strong><br>
+                            • Define policies (compaction, TTL, PII detection)<br>
+                            • Associate with tables/filesets<br>
+                            • Automated job execution<br>
+                            • Governance at scale
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONNECTORS TAB -->
+        <div id="connectors" class="tab-content">
+            <div class="diagram-section">
+                <h2 class="section-title">Gravitino Connectors</h2>
+                
+                <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.05rem;">
+                    Gravitino's power comes from its extensive <strong>connector ecosystem</strong>. Each connector provides bi-directional integration with a specific metadata source.
+                </p>
+
+                <h3 style="color: var(--accent-green); margin: 2rem 0 1rem 0;">📊 Relational / Tabular Connectors</h3>
+                <div class="connector-grid">
+                    <div class="connector-card">
+                        <strong>Apache Hive</strong><br>
+                        <small>Hive Metastore integration</small>
+                    </div>
+                    <div class="connector-card">
+                        <strong>Apache Iceberg</strong><br>
+                        <small>Full Iceberg REST support</small>
+                    </div>
+                    <div class="connector-card">
+                        <strong>MySQL</strong><br>
+                        <small>MySQL database catalog</small>
+                    </div>
+                    <div class="connector-card">
+                        <strong>PostgreSQL</strong><br>
+                        <small>PostgreSQL catalog</small>
+                    </div>
+                    <div class="connector-card">
+                        <strong>Apache Paimon</strong><br>
+                        <small>Paimon table format</small>
+                    </div>
+                    <div class="connector-card">
+                        <strong>Apache Hudi</strong><br>
+                        <small>Hudi table management</small>
+                    </div>
+                    <div class="connector-card">
+                        <strong>OceanBase</strong><br>
+                        <small>OceanBase database</small>
+                    </div>
+                    <div class="connector-card">
+                        <strong>StarRocks</strong><br>
+                        <small>StarRocks catalog (v1.0.0+)</small>
+                    </div>
+                </div>
+
+                <h3 style="color: var(--accent-blue); margin: 2rem 0 1rem 0;">📁 Fileset Connectors</h3>
+                <div class="connector-grid">
+                    <div class="connector-card">
+                        <strong>HDFS</strong><br>
+                        <small>Hadoop filesystem</small>
+                    </div>
+                    <div class="connector-card">
+                        <strong>Amazon S3</strong><br>
+                        <small>S3 object storage</small>
+                    </div>
+                    <div class="connector-card">
+                        <strong>Google GCS</strong><br>
+                        <small>Google Cloud Storage</small>
+                    </div>
+                    <div class="connector-card">
+                        <strong>Azure Blob</strong><br>
+                        <small>Azure storage</small>
+                    </div>
+                    <div class="connector-card">
+                        <strong>Aliyun OSS</strong><br>
+                        <small>Alibaba Cloud OSS</small>
+                    </div>
+                </div>
+
+                <h3 style="color: var(--accent-purple); margin: 2rem 0 1rem 0;">📨 Messaging Connectors</h3>
+                <div class="connector-grid">
+                    <div class="connector-card">
+                        <strong>Apache Kafka</strong><br>
+                        <small>Kafka topic management</small>
+                    </div>
+                </div>
+
+                <h3 style="color: var(--accent-orange); margin: 2rem 0 1rem 0;">🤖 ML & Model Connectors</h3>
+                <div class="connector-grid">
+                    <div class="connector-card">
+                        <strong>Model Catalog</strong><br>
+                        <small>ML model metadata (v0.9.0+)</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">Catalog Federation</h2>
+                
+                <p style="color: var(--text-secondary); margin-bottom: 2rem;">
+                    Gravitino can act as a <strong>"Catalog of Catalogs"</strong> - federating metadata from external catalog systems like Polaris, Nessie, and Unity Catalog.
+                </p>
+
+                <div class="visual-flow">
+                    <div class="flow-layer">
+                        <div class="flow-box highlight" style="min-width: 300px;">
+                            <strong>Gravitino Metalake</strong><br>
+                            Unified governance layer
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓ Federates</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box catalog" style="min-width: 150px;">
+                            <strong>Internal Catalog</strong><br>
+                            Managed by Gravitino
+                        </div>
+                        <div class="flow-box resource" style="min-width: 150px;">
+                            <strong>External: Polaris</strong><br>
+                            Read-only federation
+                        </div>
+                        <div class="flow-box resource" style="min-width: 150px;">
+                            <strong>External: Nessie</strong><br>
+                            Read-only federation
+                        </div>
+                        <div class="flow-box resource" style="min-width: 150px;">
+                            <strong>External: Unity</strong><br>
+                            Read-only federation
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-box-title">Why Federate?</div>
+                    <strong>Scenario:</strong> You have existing Polaris catalogs but want Gravitino's unified governance<br><br>
+                    <strong>Solution:</strong> Configure Polaris as external catalog in Gravitino<br><br>
+                    <strong>Result:</strong><br>
+                    • Polaris continues managing Iceberg metadata (source of truth)<br>
+                    • Gravitino applies RBAC on top (governance layer)<br>
+                    • Users access via Gravitino API → Gravitino checks permissions → Polaris serves metadata<br>
+                    • You get Polaris features (REST catalog) + Gravitino governance (unified RBAC, tagging, lineage)
+                </div>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">Query Engine Integration</h2>
+                
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                    Gravitino provides <strong>native connectors</strong> for major query engines, allowing seamless metadata access without engine modification.
+                </p>
+
+                <div class="architecture-diagram">
+                    <div class="arch-component">
+                        <div class="arch-component-title">Trino Connector</div>
+                        <div class="arch-component-desc">
+                            <strong>Gravitino Trino Connector:</strong><br><br>
+                            Configure Trino to use Gravitino as catalog source<br>
+                            All Gravitino catalogs appear as Trino catalogs<br>
+                            RBAC enforced transparently<br>
+                            No SQL dialect changes needed
+                        </div>
+                    </div>
+
+                    <div class="arch-component">
+                        <div class="arch-component-title">Spark Connector</div>
+                        <div class="arch-component-desc">
+                            <strong>Gravitino Spark Connector:</strong><br><br>
+                            Works with Spark 3.x<br>
+                            Access all Gravitino-managed catalogs<br>
+                            DataFrame and SQL support<br>
+                            Automatic credential management
+                        </div>
+                    </div>
+
+                    <div class="arch-component">
+                        <div class="arch-component-title">Flink Connector</div>
+                        <div class="arch-component-desc">
+                            <strong>Gravitino Flink Connector:</strong><br><br>
+                            Streaming workloads with Gravitino metadata<br>
+                            Kafka catalog integration<br>
+                            Table API and SQL support<br>
+                            Real-time governance
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BENEFITS TAB -->
+        <div id="benefits" class="tab-content">
+            <div class="diagram-section">
+                <h2 class="section-title">Why Choose Apache Gravitino?</h2>
+                
+                <div class="benefits-grid">
+                    <div class="benefit-card">
+                        <div class="benefit-title">🌐 True Multi-Source Unification</div>
+                        <div class="benefit-desc">
+                            Unlike Polaris (Iceberg only) or Unity (Databricks-centric), Gravitino manages:<br>
+                            • Relational: Hive, Iceberg, MySQL, PostgreSQL, Paimon, Hudi<br>
+                            • Files: HDFS, S3, GCS, Azure<br>
+                            • Messaging: Kafka topics<br>
+                            • AI: ML model metadata<br><br>
+                            All through ONE unified API!
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🔗 Federation First Architecture</div>
+                        <div class="benefit-desc">
+                            <strong>Don't replace, federate!</strong><br><br>
+                            • Connect to existing Hive Metastores<br>
+                            • Federate Polaris, Nessie, Unity catalogs<br>
+                            • Add governance without migration<br>
+                            • Preserve existing investments<br><br>
+                            Perfect for enterprises with heterogeneous infrastructure!
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🌍 Geo-Distribution Support</div>
+                        <div class="benefit-desc">
+                            <strong>Multi-region by design:</strong><br><br>
+                            • Deploy Gravitino in each region/cloud<br>
+                            • Instances federate metadata with each other<br>
+                            • Local performance, global visibility<br>
+                            • Cross-region lineage tracking<br><br>
+                            Critical for global enterprises!
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">📊 Comprehensive Governance</div>
+                        <div class="benefit-desc">
+                            <strong>Enterprise-grade governance:</strong><br><br>
+                            • RBAC with hierarchical privileges<br>
+                            • Push-down permission management<br>
+                            • Tagging and classification<br>
+                            • Complete audit logging<br>
+                            • End-to-end data lineage<br>
+                            • Policy-driven automation (v1.0.0+)
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🚀 Direct Management Model</div>
+                        <div class="benefit-desc">
+                            <strong>Unlike passive collectors:</strong><br><br>
+                            • Changes in Gravitino → Immediate effect in sources<br>
+                            • Changes in sources → Gravitino stays synced<br>
+                            • No stale metadata<br>
+                            • No batch collection jobs<br><br>
+                            Real-time, bi-directional synchronization!
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🎯 Iceberg REST Catalog Pioneer</div>
+                        <div class="benefit-desc">
+                            <strong>First production IRC:</strong><br><br>
+                            • Released before Polaris and Unity<br>
+                            • Full Iceberg REST API compliance<br>
+                            • Can federate other Iceberg catalogs<br>
+                            • Enhanced with Gravitino governance<br><br>
+                            Battle-tested in production!
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">💾 Flexible Storage Backend</div>
+                        <div class="benefit-desc">
+                            <strong>Choose your metadata store:</strong><br><br>
+                            • MySQL (default)<br>
+                            • PostgreSQL<br>
+                            • H2 (development)<br><br>
+                            Use existing database infrastructure!
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🔌 Pluggable Architecture</div>
+                        <div class="benefit-desc">
+                            <strong>Extensibility built-in:</strong><br><br>
+                            • Write custom connectors<br>
+                            • Extend metadata models<br>
+                            • Plugin custom authentication<br>
+                            • Add new storage backends<br><br>
+                            Adapt Gravitino to your needs!
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🤖 AI/ML Asset Management</div>
+                        <div class="benefit-desc">
+                            <strong>First-class AI support:</strong><br><br>
+                            • ML model metadata catalog<br>
+                            • Model versioning and tracking<br>
+                            • Multiple storage locations per version<br>
+                            • Integration with feature stores<br><br>
+                            Bridge data and AI governance!
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🆓 True Open Source</div>
+                        <div class="benefit-desc">
+                            <strong>Apache 2.0 licensed:</strong><br><br>
+                            • Community-driven development<br>
+                            • No vendor lock-in<br>
+                            • Self-host anywhere<br>
+                            • Active contributor community<br><br>
+                            Backed by Datastrato and growing ecosystem!
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🔄 Event-Driven Architecture</div>
+                        <div class="benefit-desc">
+                            <strong>React to metadata changes:</strong><br><br>
+                            • Event listeners for Iceberg operations<br>
+                            • Pre-event and post-event hooks<br>
+                            • Build custom workflows<br>
+                            • Integrate with external systems<br><br>
+                            Automate governance workflows!
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🌐 Web UI & Natural Language (v1.0.0+)</div>
+                        <div class="benefit-desc">
+                            <strong>Enhanced user experience:</strong><br><br>
+                            • Web UI for browsing catalogs<br>
+                            • File/directory listing for filesets<br>
+                            • MCP server for natural language queries<br>
+                            • Manage metadata conversationally<br><br>
+                            Governance made accessible!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COMPARISON TAB -->
+        <div id="comparison" class="tab-content">
+            <div class="diagram-section">
+                <h2 class="section-title">Gravitino vs Other Catalogs</h2>
+                
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Gravitino</th>
+                            <th>Polaris</th>
+                            <th>Nessie</th>
+                            <th>Unity Catalog</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Format Support</strong></td>
+                            <td class="check">Iceberg, Hive, Paimon, Hudi, MySQL, PostgreSQL</td>
+                            <td>Iceberg only</td>
+                            <td>Iceberg only</td>
+                            <td class="check">Iceberg, Delta, Parquet</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Unstructured Data</strong></td>
+                            <td class="check">✓✓ Fileset catalog (HDFS, S3, GCS, Azure)</td>
+                            <td class="cross">✗</td>
+                            <td class="cross">✗</td>
+                            <td class="check">✓ Volumes</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Messaging Support</strong></td>
+                            <td class="check">✓ Kafka topics</td>
+                            <td class="cross">✗</td>
+                            <td class="cross">✗</td>
+                            <td class="cross">✗</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ML Model Metadata</strong></td>
+                            <td class="check">✓✓ Model catalog (v0.9.0+)</td>
+                            <td class="cross">✗</td>
+                            <td class="cross">✗</td>
+                            <td class="check">✓ Unity ML</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Catalog Federation</strong></td>
+                            <td class="check">✓✓ Can federate Polaris, Nessie, Unity</td>
+                            <td class="check">✓ External catalogs (read-only)</td>
+                            <td class="cross">✗</td>
+                            <td>Delta Sharing</td>
+                        </tr>
+                        <tr>
+                            <td><strong>RBAC Granularity</strong></td>
+                            <td class="check">Metalake, Catalog, Schema, Table, Column, Fileset, Topic</td>
+                            <td class="check">Catalog, Namespace, Table, View</td>
+                            <td>Branch, Namespace, Path</td>
+                            <td class="check">Catalog, Schema, Table, Column</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Git-like Versioning</strong></td>
+                            <td class="cross">✗ (Catalog only)</td>
+                            <td class="cross">✗</td>
+                            <td class="check">✓✓ Full Git semantics</td>
+                            <td class="cross">✗</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Credential Vending</strong></td>
+                            <td class="check">✓ STS-based (v0.7.0+)</td>
+                            <td class="check">✓✓ Advanced STS</td>
+                            <td class="check">✓ Basic</td>
+                            <td class="check">✓ Unity-specific</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tagging System</strong></td>
+                            <td class="check">✓✓ Column-level tags</td>
+                            <td class="cross">✗</td>
+                            <td class="cross">✗</td>
+                            <td class="check">✓ Unity tags</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Audit Logging</strong></td>
+                            <td class="check">✓✓ Complete audit trail</td>
+                            <td class="check">✓ Available</td>
+                            <td>Basic</td>
+                            <td class="check">✓ Unity audit</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Data Lineage</strong></td>
+                            <td class="check">✓✓ End-to-end + Marquez integration</td>
+                            <td class="cross">✗</td>
+                            <td class="cross">✗</td>
+                            <td class="check">✓ Unity lineage</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Geo-Distribution</strong></td>
+                            <td class="check">✓✓ Native support</td>
+                            <td class="check">✓ Multi-cloud</td>
+                            <td class="check">✓ Distributed</td>
+                            <td>Databricks regions</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Multi-Engine Support</strong></td>
+                            <td class="check">✓✓ Spark, Flink, Trino, any REST client</td>
+                            <td class="check">✓✓ Any REST client</td>
+                            <td class="check">✓✓ Any REST client</td>
+                            <td>Databricks-optimized</td>
+                        </tr>
+                        <tr>
+                            <td><strong>REST API</strong></td>
+                            <td class="check">✓ Unified + Iceberg REST</td>
+                            <td class="check">✓ Iceberg REST</td>
+                            <td class="check">✓ Iceberg REST + Git semantics</td>
+                            <td class="check">✓ Unity APIs</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Deployment</strong></td>
+                            <td>Self-host (any infra)</td>
+                            <td>Self-host OR managed (Snowflake)</td>
+                            <td>Self-host OR managed (Dremio)</td>
+                            <td>Databricks managed</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Vendor Neutrality</strong></td>
+                            <td class="check">✓✓ Truly neutral</td>
+                            <td class="check">✓✓ Open source (Snowflake donated)</td>
+                            <td class="check">✓✓ Independent</td>
+                            <td>Databricks ecosystem</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Maturity</strong></td>
+                            <td>v1.0.0 (Jan 2025) - Production ready</td>
+                            <td>Incubating - New (2024)</td>
+                            <td>Mature - Oldest modern catalog</td>
+                            <td>GA - Databricks proven</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Best For</strong></td>
+                            <td class="check">Unified multi-source governance</td>
+                            <td class="check">Iceberg-focused enterprise</td>
+                            <td class="check">Git workflows for data</td>
+                            <td>Databricks users</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">When to Choose Gravitino</h2>
+                
+                <div class="architecture-diagram">
+                    <div class="arch-component" style="border-color: var(--accent-green);">
+                        <div class="arch-component-title">✓ Use Gravitino If...</div>
+                        <div class="arch-component-desc">
+                            ✓ You have <strong>heterogeneous data sources</strong> (Hive + Iceberg + MySQL + S3 + Kafka)<br>
+                            ✓ You need <strong>unified governance</strong> across all sources<br>
+                            ✓ You want to <strong>federate existing catalogs</strong> (Polaris, Nessie, Unity)<br>
+                            ✓ You have <strong>multi-cloud/multi-region</strong> deployments<br>
+                            ✓ You need <strong>AI/ML asset management</strong> alongside data<br>
+                            ✓ You want <strong>tagging and lineage</strong> across everything<br>
+                            ✓ You prefer <strong>vendor-neutral open source</strong><br>
+                            ✓ You have <strong>complex organization</strong> with many teams/sources
+                        </div>
+                    </div>
+
+                    <div class="arch-component" style="border-color: var(--accent-orange);">
+                        <div class="arch-component-title">⚠️ Consider Alternatives If...</div>
+                        <div class="arch-component-desc">
+                            • You're Iceberg-only → Polaris might be simpler<br>
+                            • You need Git versioning → Nessie is better<br>
+                            • You're all-in Databricks → Unity Catalog<br>
+                            • You have simple setup → AWS Glue<br>
+                            • You only need passive collection → DataHub, Atlan<br>
+                            • Your team lacks expertise → Managed services
+                        </div>
+                    </div>
+
+                    <div class="arch-component" style="border-color: var(--accent-blue);">
+                        <div class="arch-component-title">💡 Hybrid Approach</div>
+                        <div class="arch-component-desc">
+                            <strong>Gravitino + Specialized Catalogs:</strong><br><br>
+                            Use Gravitino as the <strong>unifying layer</strong>:<br>
+                            • Nessie for version-controlled Iceberg tables<br>
+                            • Polaris for managed Iceberg catalog<br>
+                            • Unity for Databricks workloads<br>
+                            • Gravitino federates all of them<br><br>
+                            <strong>Result:</strong> Unified governance + Best-of-breed capabilities!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- USE CASES TAB -->
+        <div id="use-cases" class="tab-content">
+            <div class="diagram-section">
+                <h2 class="section-title">Real-World Use Cases</h2>
+                
+                <div class="benefits-grid">
+                    <div class="benefit-card">
+                        <div class="benefit-title">🏢 Enterprise Multi-Cloud Data Platform</div>
+                        <div class="benefit-desc">
+                            <strong>Challenge:</strong> Global company with data in AWS (US), Azure (EU), GCP (APAC)<br><br>
+                            <strong>Gravitino Solution:</strong>
+                            <ul>
+                                <li>Deploy Gravitino in each region</li>
+                                <li>Federate metadata across instances</li>
+                                <li>Single metalake with global visibility</li>
+                                <li>Local performance, global governance</li>
+                                <li>Unified RBAC across all clouds</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🔄 Legacy Modernization</div>
+                        <div class="benefit-desc">
+                            <strong>Challenge:</strong> Company migrating from Hive to Iceberg over time<br><br>
+                            <strong>Gravitino Solution:</strong>
+                            <ul>
+                                <li>One metalake with Hive AND Iceberg catalogs</li>
+                                <li>Unified access via Spark/Trino connectors</li>
+                                <li>Consistent governance during migration</li>
+                                <li>Gradually move tables without disruption</li>
+                                <li>Cross-catalog queries during transition</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🤖 AI/ML Platform</div>
+                        <div class="benefit-desc">
+                            <strong>Challenge:</strong> ML team needs unified access to training data and models<br><br>
+                            <strong>Gravitino Solution:</strong>
+                            <ul>
+                                <li>Fileset catalog for raw datasets (S3)</li>
+                                <li>Iceberg catalog for feature tables</li>
+                                <li>Model catalog for ML models</li>
+                                <li>Kafka catalog for real-time features</li>
+                                <li>End-to-end lineage: data → features → models</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🏦 Financial Services Compliance</div>
+                        <div class="benefit-desc">
+                            <strong>Challenge:</strong> Strict audit requirements, multi-tenant data isolation<br><br>
+                            <strong>Gravitino Solution:</strong>
+                            <ul>
+                                <li>Separate metalake per business unit</li>
+                                <li>Granular RBAC down to column level</li>
+                                <li>Complete audit logging for compliance</li>
+                                <li>Tag sensitive data (PII, Financial)</li>
+                                <li>Push-down permissions to source systems</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🌐 IoT Data Platform</div>
+                        <div class="benefit-desc">
+                            <strong>Challenge:</strong> Real-time sensor data (Kafka) + batch analytics (Iceberg) + file storage<br><br>
+                            <strong>Gravitino Solution:</strong>
+                            <ul>
+                                <li>Kafka catalog for streaming topics</li>
+                                <li>Iceberg catalog for aggregated tables</li>
+                                <li>Fileset catalog for raw sensor logs</li>
+                                <li>Flink writes to all three through Gravitino</li>
+                                <li>Unified governance across streaming and batch</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🔗 Catalog Federation for Governance</div>
+                        <div class="benefit-desc">
+                            <strong>Challenge:</strong> Teams using different catalogs (Polaris, Nessie, Unity) - no unified governance<br><br>
+                            <strong>Gravitino Solution:</strong>
+                            <ul>
+                                <li>Configure all as external catalogs in Gravitino</li>
+                                <li>Apply Gravitino RBAC on top</li>
+                                <li>Unified tagging across all catalogs</li>
+                                <li>Central audit trail</li>
+                                <li>No migration needed - federate in place!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">Migration Path to Gravitino</h2>
+                
+                <div class="visual-flow">
+                    <div class="flow-layer">
+                        <div class="flow-box" style="background: rgba(255, 51, 102, 0.05); border-color: var(--accent-red);">
+                            <strong>Current State</strong><br>
+                            Multiple disconnected systems:<br>
+                            Hive Metastore, JDBC catalogs, files in S3
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓ Phase 1</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box" style="background: rgba(255, 107, 53, 0.05); border-color: var(--accent-orange);">
+                            <strong>Deploy Gravitino</strong><br>
+                            Stand up Gravitino instance<br>
+                            Create metalake<br>
+                            Configure storage backend (MySQL/PostgreSQL)
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓ Phase 2</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box" style="background: rgba(189, 147, 249, 0.05); border-color: var(--accent-purple);">
+                            <strong>Connect Existing Systems</strong><br>
+                            Add Hive catalog to Gravitino<br>
+                            Add MySQL catalog<br>
+                            Add Fileset catalog for S3<br>
+                            <em>Systems continue operating normally</em>
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓ Phase 3</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box" style="background: rgba(0, 212, 255, 0.05); border-color: var(--accent-blue);">
+                            <strong>Integrate Query Engines</strong><br>
+                            Configure Spark connector<br>
+                            Configure Trino connector<br>
+                            Teams start using Gravitino APIs<br>
+                            <em>Still dual-running with direct access</em>
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓ Phase 4</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box highlight">
+                            <strong>Fully on Gravitino</strong><br>
+                            All access goes through Gravitino<br>
+                            Unified governance enforced<br>
+                            Tagging, lineage, audit in place<br>
+                            <span style="color: var(--accent-green);">✓ Migration complete!</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-box-title">Key Migration Principle</div>
+                    Gravitino's <strong>federation model</strong> allows incremental adoption:<br><br>
+                    • No "big bang" migration<br>
+                    • Connect systems gradually<br>
+                    • Teams can continue using existing tools<br>
+                    • Add governance layer incrementally<br>
+                    • Low risk, high reward!
+                </div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: var(--accent-green);"></div>
+                <span>Advantage / Supported</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: var(--accent-red);"></div>
+                <span>Limitation / Not Supported</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: var(--accent-blue);"></div>
+                <span>Core Concept</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: var(--accent-purple);"></div>
+                <span>Federation</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabId) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabId).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
