@@ -1,0 +1,1641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apache Polaris - Enterprise Governance for Apache Iceberg</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Mono:wght@400;700&family=Crimson+Pro:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0e15;
+            --bg-card: #151922;
+            --bg-card-hover: #1d2330;
+            --accent-blue: #00d4ff;
+            --accent-orange: #ff6b35;
+            --accent-green: #00ff88;
+            --accent-red: #ff3366;
+            --accent-purple: #bd93f9;
+            --text-primary: #e8eaed;
+            --text-secondary: #9ca3af;
+            --border: #2d3748;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 2rem;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-family: 'Crimson Pro', serif;
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 1rem 2rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .tab:hover {
+            color: var(--accent-blue);
+        }
+
+        .tab.active {
+            color: var(--accent-blue);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent-blue);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .diagram-section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .diagram-section:hover {
+            border-color: var(--accent-blue);
+            box-shadow: 0 8px 32px rgba(0, 212, 255, 0.1);
+        }
+
+        .section-title {
+            font-family: 'Crimson Pro', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .section-title::before {
+            content: '▸';
+            font-size: 1.5rem;
+        }
+
+        .architecture-diagram {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .arch-component {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(189, 147, 249, 0.05));
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .arch-component:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-blue);
+            box-shadow: 0 8px 24px rgba(0, 212, 255, 0.2);
+        }
+
+        .arch-component-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: var(--accent-blue);
+        }
+
+        .arch-component-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .flow-box {
+            background: var(--bg-card-hover);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 1.5rem;
+            min-width: 200px;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .flow-box:hover {
+            transform: scale(1.05);
+            border-color: var(--accent-green);
+        }
+
+        .flow-box.highlight {
+            border-color: var(--accent-green);
+            background: rgba(0, 255, 136, 0.05);
+        }
+
+        .flow-arrow {
+            font-size: 2rem;
+            color: var(--accent-blue);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .benefit-card {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 212, 255, 0.05));
+            border: 2px solid var(--accent-green);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .benefit-card::before {
+            content: '✓';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 2rem;
+            opacity: 0.2;
+            color: var(--accent-green);
+        }
+
+        .benefit-card:hover {
+            transform: translateX(4px);
+            border-color: var(--accent-blue);
+            box-shadow: 0 4px 16px rgba(0, 212, 255, 0.3);
+        }
+
+        .benefit-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            color: var(--accent-green);
+        }
+
+        .benefit-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            background: var(--bg-card-hover);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .comparison-table th {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(189, 147, 249, 0.2));
+            padding: 1rem;
+            text-align: left;
+            font-weight: 700;
+            color: var(--accent-blue);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .comparison-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .comparison-table tr:hover {
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .check {
+            color: var(--accent-green);
+            font-weight: 700;
+        }
+
+        .cross {
+            color: var(--accent-red);
+            font-weight: 700;
+        }
+
+        .code-block {
+            background: #1a1d29;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--accent-green);
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        .highlight-text {
+            background: rgba(0, 212, 255, 0.2);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 700;
+            color: var(--accent-blue);
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 212, 255, 0.05));
+            border-left: 4px solid var(--accent-green);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 8px;
+        }
+
+        .info-box-title {
+            font-weight: 700;
+            color: var(--accent-green);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(255, 107, 53, 0.05));
+            border-left: 4px solid var(--accent-orange);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 8px;
+        }
+
+        .warning-box-title {
+            font-weight: 700;
+            color: var(--accent-orange);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                width: 0;
+            }
+            to {
+                width: 100%;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .visual-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .flow-layer {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .vertical-arrow {
+            text-align: center;
+            font-size: 2rem;
+            color: var(--accent-blue);
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .rbac-diagram {
+            background: var(--bg-card-hover);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .rbac-layer {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin: 1.5rem 0;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .rbac-box {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(189, 147, 249, 0.1));
+            border: 2px solid var(--accent-blue);
+            border-radius: 10px;
+            padding: 1.5rem;
+            min-width: 200px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .rbac-box:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 24px rgba(0, 212, 255, 0.3);
+        }
+
+        .rbac-box.principal {
+            border-color: var(--accent-green);
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 212, 255, 0.05));
+        }
+
+        .rbac-box.catalog-role {
+            border-color: var(--accent-purple);
+            background: linear-gradient(135deg, rgba(189, 147, 249, 0.1), rgba(0, 212, 255, 0.05));
+        }
+
+        .rbac-box.resource {
+            border-color: var(--accent-orange);
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(255, 107, 53, 0.05));
+        }
+
+        .legend {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        ul {
+            margin-left: 1.5rem;
+            margin-top: 0.5rem;
+        }
+
+        li {
+            margin: 0.5rem 0;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Apache Polaris</h1>
+        <p class="subtitle">Enterprise Governance & Catalog for Apache Iceberg</p>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('overview')">Overview</button>
+            <button class="tab" onclick="switchTab('architecture')">Architecture</button>
+            <button class="tab" onclick="switchTab('governance')">Governance (RBAC)</button>
+            <button class="tab" onclick="switchTab('credential-vending')">Credential Vending</button>
+            <button class="tab" onclick="switchTab('benefits')">Benefits</button>
+            <button class="tab" onclick="switchTab('comparison')">vs Other Catalogs</button>
+            <button class="tab" onclick="switchTab('use-cases')">Use Cases</button>
+        </div>
+
+        <!-- OVERVIEW TAB -->
+        <div id="overview" class="tab-content active">
+            <div class="diagram-section">
+                <h2 class="section-title">What is Apache Polaris?</h2>
+                
+                <p style="color: var(--text-secondary); font-size: 1.1rem; line-height: 1.8; margin-bottom: 2rem;">
+                    <span class="highlight-text">Apache Polaris</span> is an <strong>open-source, fully-featured catalog</strong> for Apache Iceberg that implements the Iceberg REST API. Originally created by Snowflake and donated to the Apache Software Foundation, Polaris provides <strong>centralized metadata management</strong> with enterprise-grade <strong>governance</strong> built directly into the catalog layer.
+                </p>
+
+                <div class="architecture-diagram">
+                    <div class="arch-component">
+                        <div class="arch-component-title">🎯 Core Purpose</div>
+                        <div class="arch-component-desc">
+                            Centralized catalog for managing Apache Iceberg tables with built-in security and governance
+                        </div>
+                    </div>
+                    
+                    <div class="arch-component">
+                        <div class="arch-component-title">🔐 Governance First</div>
+                        <div class="arch-component-desc">
+                            RBAC (Role-Based Access Control) is a first-class citizen, not an afterthought
+                        </div>
+                    </div>
+                    
+                    <div class="arch-component">
+                        <div class="arch-component-title">🌐 Multi-Engine Support</div>
+                        <div class="arch-component-desc">
+                            Works with Spark, Flink, Trino, Dremio, Snowflake, and any Iceberg REST client
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-box-title">🚀 Key Innovation</div>
+                    Unlike traditional catalogs like HMS that treat governance as an external concern (requiring Apache Ranger), Polaris has <strong>governance baked into the catalog itself</strong> through its sophisticated RBAC model and credential vending system.
+                </div>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">The Polaris Philosophy</h2>
+                
+                <div class="benefits-grid">
+                    <div class="benefit-card">
+                        <div class="benefit-title">Vendor Neutral</div>
+                        <div class="benefit-desc">
+                            Self-host on your infrastructure OR use managed service (Snowflake Open Catalog). No lock-in.
+                        </div>
+                    </div>
+                    
+                    <div class="benefit-card">
+                        <div class="benefit-title">Open Standard Based</div>
+                        <div class="benefit-desc">
+                            Built on Iceberg REST API specification - works with any compatible engine
+                        </div>
+                    </div>
+                    
+                    <div class="benefit-card">
+                        <div class="benefit-title">Security by Design</div>
+                        <div class="benefit-desc">
+                            Credential vending, RBAC, and audit logging are core features, not plugins
+                        </div>
+                    </div>
+                    
+                    <div class="benefit-card">
+                        <div class="benefit-title">Catalog Federation</div>
+                        <div class="benefit-desc">
+                            Can act as "Catalog of Catalogs" - manage internal catalogs AND external ones (Nessie, Gravitino, etc.)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ARCHITECTURE TAB -->
+        <div id="architecture" class="tab-content">
+            <div class="diagram-section">
+                <h2 class="section-title">Polaris Architecture</h2>
+                
+                <div class="visual-flow">
+                    <div class="flow-layer">
+                        <div class="flow-box">
+                            <div class="arch-component-title">Query Engines</div>
+                            <div class="arch-component-desc">Spark • Flink • Trino • Dremio • Snowflake</div>
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box highlight">
+                            <div class="arch-component-title">Polaris Catalog (REST API)</div>
+                            <div class="arch-component-desc">
+                                <strong>• RBAC Authorization</strong><br>
+                                • Credential Vending<br>
+                                • Metadata Management<br>
+                                • Policy Enforcement
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box">
+                            <div class="arch-component-title">Iceberg Metadata Layer</div>
+                            <div class="arch-component-desc">metadata.json • manifests • snapshots</div>
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box">
+                            <div class="arch-component-title">Cloud Storage</div>
+                            <div class="arch-component-desc">S3 • Azure Blob • GCS • HDFS</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">Internal vs External Catalogs</h2>
+                
+                <div class="architecture-diagram">
+                    <div class="arch-component" style="border-color: var(--accent-green);">
+                        <div class="arch-component-title">Internal Catalogs</div>
+                        <div class="arch-component-desc">
+                            <strong>Fully managed by Polaris</strong><br><br>
+                            ✓ Complete control over metadata<br>
+                            ✓ All RBAC features available<br>
+                            ✓ Polaris is source of truth<br>
+                            ✓ Full policy enforcement<br>
+                            ✓ Credential vending enabled<br><br>
+                            <strong>Use when:</strong> Building new catalogs or migrating existing ones
+                        </div>
+                    </div>
+                    
+                    <div class="arch-component" style="border-color: var(--accent-purple);">
+                        <div class="arch-component-title">External Catalogs</div>
+                        <div class="arch-component-desc">
+                            <strong>Read-only sync from external systems</strong><br><br>
+                            ✓ Connect to Nessie, Gravitino, etc.<br>
+                            ✓ Apply Polaris RBAC on top<br>
+                            ✓ External catalog is source of truth<br>
+                            ✓ Polaris provides governance layer<br>
+                            ⚠ Read-only access from Polaris<br><br>
+                            <strong>Use when:</strong> You have existing catalogs but want Polaris governance
+                        </div>
+                    </div>
+
+                    <div class="arch-component" style="border-color: var(--accent-blue);">
+                        <div class="arch-component-title">Best of Both Worlds</div>
+                        <div class="arch-component-desc">
+                            <strong>Hybrid Approach</strong><br><br>
+                            Example: Use Nessie as external catalog in Polaris<br><br>
+                            ✓ Get Nessie's Git versioning<br>
+                            ✓ Get Polaris's RBAC governance<br>
+                            ✓ Centralized access control<br>
+                            ✓ Unified credential vending<br><br>
+                            Perfect for organizations needing both capabilities!
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">Key Entities in Polaris</h2>
+                
+                <div class="code-block">
+Polaris Hierarchy:
+
+Catalog (Top Level)
+  │
+  ├─ Namespace (like database/schema)
+  │   │
+  │   ├─ Table (Iceberg table)
+  │   ├─ Table
+  │   └─ View (Iceberg view)
+  │
+  └─ Namespace
+      ├─ Table
+      └─ Namespace (nested namespaces supported!)
+          └─ Table
+
+Example Structure:
+- Catalog: "production"
+  - Namespace: "finance"
+    - Table: "transactions"
+    - Table: "accounts"
+  - Namespace: "marketing"
+    - Table: "campaigns"
+    - View: "campaign_summary"
+                </div>
+
+                <div class="info-box">
+                    <div class="info-box-title">Securable Objects</div>
+                    Every entity in this hierarchy is a <strong>securable object</strong> - meaning you can define granular permissions at the catalog, namespace, table, or view level.
+                </div>
+            </div>
+        </div>
+
+        <!-- GOVERNANCE (RBAC) TAB -->
+        <div id="governance" class="tab-content">
+            <div class="diagram-section">
+                <h2 class="section-title">Polaris RBAC Model</h2>
+                
+                <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.05rem;">
+                    Polaris uses a <strong>two-layer RBAC model</strong> that separates identity management from resource permissions. This design provides maximum flexibility and security.
+                </p>
+
+                <div class="rbac-diagram">
+                    <h3 style="color: var(--accent-blue); margin-bottom: 1rem;">The Two-Layer Model</h3>
+                    
+                    <div class="rbac-layer">
+                        <div class="rbac-box principal">
+                            <strong>Service Principals</strong><br>
+                            <small>(Users/Services/Apps)</small>
+                        </div>
+                        <div class="flow-arrow">→</div>
+                        <div class="rbac-box principal">
+                            <strong>Principal Roles</strong><br>
+                            <small>(DataEngineer, DataScientist)</small>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; color: var(--accent-purple); font-size: 1.5rem; margin: 1rem 0;">
+                        Granted To ↓
+                    </div>
+
+                    <div class="rbac-layer">
+                        <div class="rbac-box catalog-role">
+                            <strong>Catalog Roles</strong><br>
+                            <small>(TableManager, Reader, Admin)</small>
+                        </div>
+                        <div class="flow-arrow">→</div>
+                        <div class="rbac-box resource">
+                            <strong>Resources</strong><br>
+                            <small>(Catalogs, Namespaces, Tables)</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-box-title">Why Two Layers?</div>
+                    <strong>Layer 1 (Principal → Principal Role):</strong> Groups users by job function<br>
+                    <strong>Layer 2 (Catalog Role → Resources):</strong> Defines what actions are allowed on which resources<br><br>
+                    This separation allows you to manage hundreds of users across multiple catalogs efficiently.
+                </div>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">RBAC Components Explained</h2>
+                
+                <div class="architecture-diagram">
+                    <div class="arch-component" style="border-color: var(--accent-green);">
+                        <div class="arch-component-title">1. Service Principals</div>
+                        <div class="arch-component-desc">
+                            <strong>Who:</strong> Unique identities for users, services, or applications<br><br>
+                            <strong>Examples:</strong><br>
+                            • bob@company.com (user)<br>
+                            • spark-job-prod (service)<br>
+                            • etl-pipeline-dev (app)<br><br>
+                            <strong>Authentication:</strong> OAuth2, client credentials, or external IDP (OIDC)
+                        </div>
+                    </div>
+
+                    <div class="arch-component" style="border-color: var(--accent-blue);">
+                        <div class="arch-component-title">2. Principal Roles</div>
+                        <div class="arch-component-desc">
+                            <strong>What:</strong> Logical grouping of service principals<br><br>
+                            <strong>Examples:</strong><br>
+                            • DataEngineer<br>
+                            • DataScientist<br>
+                            • AnalyticsReader<br>
+                            • MLModelTrainer<br><br>
+                            <strong>Benefit:</strong> Assign roles to users, not permissions directly
+                        </div>
+                    </div>
+
+                    <div class="arch-component" style="border-color: var(--accent-purple);">
+                        <div class="arch-component-title">3. Catalog Roles</div>
+                        <div class="arch-component-desc">
+                            <strong>What:</strong> Define privileges on specific catalog resources<br><br>
+                            <strong>Examples:</strong><br>
+                            • prod_catalog_admin<br>
+                            • finance_namespace_reader<br>
+                            • marketing_table_writer<br><br>
+                            <strong>Scope:</strong> Specific to ONE catalog
+                        </div>
+                    </div>
+                </div>
+
+                <div class="architecture-diagram">
+                    <div class="arch-component" style="border-color: var(--accent-orange);">
+                        <div class="arch-component-title">4. Privileges</div>
+                        <div class="arch-component-desc">
+                            <strong>What:</strong> Specific actions that can be performed<br><br>
+                            <strong>Catalog Level:</strong><br>
+                            • CATALOG_MANAGE_ACCESS<br>
+                            • CATALOG_MANAGE_CONTENT<br>
+                            • CATALOG_MANAGE_METADATA<br><br>
+                            <strong>Namespace Level:</strong><br>
+                            • NAMESPACE_CREATE<br>
+                            • NAMESPACE_DROP<br>
+                            • NAMESPACE_LIST<br><br>
+                            <strong>Table Level:</strong><br>
+                            • TABLE_CREATE<br>
+                            • TABLE_READ_DATA<br>
+                            • TABLE_WRITE_DATA<br>
+                            • TABLE_DROP<br>
+                            • TABLE_READ_PROPERTIES<br>
+                            • TABLE_WRITE_PROPERTIES
+                        </div>
+                    </div>
+
+                    <div class="arch-component" style="border-color: var(--accent-green);">
+                        <div class="arch-component-title">5. Securable Objects</div>
+                        <div class="arch-component-desc">
+                            <strong>What:</strong> Resources that can be secured<br><br>
+                            <strong>Hierarchy:</strong><br>
+                            • Catalog (top level)<br>
+                            • Namespace (can be nested)<br>
+                            • Table<br>
+                            • View<br><br>
+                            <strong>Inheritance:</strong> Permissions flow down the hierarchy
+                        </div>
+                    </div>
+
+                    <div class="arch-component" style="border-color: var(--accent-blue);">
+                        <div class="arch-component-title">6. Many-to-Many</div>
+                        <div class="arch-component-desc">
+                            <strong>Flexibility:</strong><br><br>
+                            ✓ One principal can have multiple principal roles<br>
+                            ✓ One principal role can have multiple catalog roles<br>
+                            ✓ One catalog role can be granted to multiple principal roles<br><br>
+                            This provides maximum flexibility for complex organizations!
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">RBAC in Action: Real Example</h2>
+                
+                <div class="code-block">
+# Scenario: Data Engineer Bob needs to work with production and dev catalogs
+
+1. CREATE SERVICE PRINCIPAL
+   Principal: bob@company.com
+   Credentials: OAuth2 or client_id/secret
+
+2. ASSIGN PRINCIPAL ROLE
+   bob@company.com → DataEngineer (principal role)
+
+3. GRANT CATALOG ROLES TO PRINCIPAL ROLE
+   DataEngineer → bronze_contributor (catalog role on bronze_catalog)
+   DataEngineer → silver_admin (catalog role on silver_catalog)
+   DataEngineer → gold_reader (catalog role on gold_catalog)
+
+4. CATALOG ROLES HAVE PRIVILEGES
+   bronze_contributor:
+     - TABLE_CREATE on bronze_catalog.raw namespace
+     - TABLE_WRITE_DATA on bronze_catalog.raw namespace
+   
+   silver_admin:
+     - CATALOG_MANAGE_CONTENT on silver_catalog
+     - Full control over all namespaces and tables
+   
+   gold_reader:
+     - TABLE_READ_DATA on gold_catalog.* (all namespaces)
+     - NAMESPACE_LIST on gold_catalog
+
+RESULT: Bob can:
+✓ Write to bronze (raw data ingestion)
+✓ Manage everything in silver (transformation)
+✓ Read from gold (verification)
+✗ Cannot write to gold (production protection)
+                </div>
+
+                <div class="warning-box">
+                    <div class="warning-box-title">🔒 Security Best Practice</div>
+                    Never grant privileges directly to service principals. Always use:
+                    <br>Principal → Principal Role → Catalog Role → Privileges
+                    <br><br>This indirection makes it easy to:
+                    <ul>
+                        <li>Onboard new users (assign existing principal role)</li>
+                        <li>Change access patterns (modify catalog role privileges)</li>
+                        <li>Audit access (see which principal roles have which catalog roles)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">Advanced: External Policy Decision Points</h2>
+                
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                    For organizations with existing policy infrastructure, Polaris supports integration with <strong>external PDPs</strong> like Open Policy Agent (OPA).
+                </p>
+
+                <div class="info-box">
+                    <div class="info-box-title">OPA Integration</div>
+                    When enabled, Polaris can delegate authorization decisions to OPA, allowing you to:
+                    <ul>
+                        <li>Use existing OPA policies across multiple systems</li>
+                        <li>Implement complex, context-aware policies (time-based, IP-based, etc.)</li>
+                        <li>Centralize policy management outside the catalog</li>
+                        <li>Version control your policies in Git</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- CREDENTIAL VENDING TAB -->
+        <div id="credential-vending" class="tab-content">
+            <div class="diagram-section">
+                <h2 class="section-title">Credential Vending System</h2>
+                
+                <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.05rem;">
+                    One of Polaris's most powerful security features is <strong>credential vending</strong> - the ability to issue short-lived, scoped credentials to query engines at runtime.
+                </p>
+
+                <div class="visual-flow">
+                    <div class="flow-layer">
+                        <div class="flow-box">
+                            <strong>Traditional Approach (Insecure)</strong><br>
+                            Query engine has permanent AWS keys<br>
+                            Full S3 bucket access<br>
+                            Credentials stored in config files<br>
+                            <span style="color: var(--accent-red);">⚠️ High security risk</span>
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">vs</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box highlight">
+                            <strong>Polaris Credential Vending (Secure)</strong><br>
+                            Query engine has NO storage credentials<br>
+                            Polaris vends temporary credentials per-query<br>
+                            Credentials expire after query completes<br>
+                            <span style="color: var(--accent-green);">✓ Minimal attack surface</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">How Credential Vending Works</h2>
+                
+                <div class="visual-flow">
+                    <div class="flow-layer">
+                        <div class="flow-box" style="background: rgba(0, 212, 255, 0.05); border-color: var(--accent-blue);">
+                            <strong>Step 1: Query Submission</strong><br>
+                            User: SELECT * FROM catalog.ns.table<br>
+                            Query engine → Polaris REST API
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box" style="background: rgba(0, 255, 136, 0.05); border-color: var(--accent-green);">
+                            <strong>Step 2: Authorization Check</strong><br>
+                            Polaris validates:<br>
+                            • Service principal identity<br>
+                            • Principal roles<br>
+                            • Catalog roles<br>
+                            • TABLE_READ_DATA privilege
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box" style="background: rgba(189, 147, 249, 0.05); border-color: var(--accent-purple);">
+                            <strong>Step 3: Credential Vending</strong><br>
+                            Polaris generates temporary credentials:<br>
+                            • STS AssumeRole (AWS)<br>
+                            • Service Principal (Azure)<br>
+                            • Workload Identity (GCP)<br>
+                            <br>
+                            Credentials scoped to ONLY this table's S3 prefix<br>
+                            Expiration: 1 hour (configurable)
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box" style="background: rgba(255, 107, 53, 0.05); border-color: var(--accent-orange);">
+                            <strong>Step 4: Data Access</strong><br>
+                            Query engine uses vended credentials to:<br>
+                            • Read metadata.json from S3<br>
+                            • Read manifest files<br>
+                            • Read data files (Parquet)<br>
+                            <br>
+                            Credentials automatically expire after query
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-box-title">Security Benefits</div>
+                    <strong>✓ No Long-Lived Credentials:</strong> Query engines never store permanent cloud credentials<br>
+                    <strong>✓ Least Privilege:</strong> Credentials are scoped to exactly what's needed for the query<br>
+                    <strong>✓ Automatic Expiration:</strong> Even if stolen, credentials expire quickly<br>
+                    <strong>✓ Centralized Management:</strong> All storage access flows through Polaris<br>
+                    <strong>✓ Audit Trail:</strong> Every credential issuance is logged
+                </div>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">Storage Configuration</h2>
+                
+                <div class="architecture-diagram">
+                    <div class="arch-component">
+                        <div class="arch-component-title">AWS S3</div>
+                        <div class="arch-component-desc">
+                            <strong>Method:</strong> STS AssumeRole<br><br>
+                            Polaris creates IAM role with trust policy<br>
+                            Vends temporary credentials via AssumeRole API<br>
+                            Credentials include:<br>
+                            • AccessKeyId<br>
+                            • SecretAccessKey<br>
+                            • SessionToken<br>
+                            • Expiration timestamp
+                        </div>
+                    </div>
+
+                    <div class="arch-component">
+                        <div class="arch-component-title">Azure Blob Storage</div>
+                        <div class="arch-component-desc">
+                            <strong>Method:</strong> Service Principal + SAS Token<br><br>
+                            Polaris uses managed identity or service principal<br>
+                            Vends Azure SAS tokens with limited scope<br>
+                            Token includes:<br>
+                            • Storage account access<br>
+                            • Container scope<br>
+                            • Expiration time<br>
+                            • Read/write permissions
+                        </div>
+                    </div>
+
+                    <div class="arch-component">
+                        <div class="arch-component-title">Google Cloud Storage</div>
+                        <div class="arch-component-desc">
+                            <strong>Method:</strong> Workload Identity Federation<br><br>
+                            Polaris uses service account<br>
+                            Vends short-lived OAuth2 tokens<br>
+                            Token includes:<br>
+                            • GCS bucket access<br>
+                            • Object-level scope<br>
+                            • Time-limited validity<br>
+                            • IAM policy binding
+                        </div>
+                    </div>
+                </div>
+
+                <div class="code-block">
+# Example: Creating Storage Configuration in Polaris
+
+POST /api/management/v1/catalogs
+{
+  "name": "production",
+  "type": "INTERNAL",
+  "properties": {
+    "default-base-location": "s3://my-data-lake/warehouse"
+  },
+  "storageConfigInfo": {
+    "storageType": "S3",
+    "allowedLocations": [
+      "s3://my-data-lake/warehouse/*"
+    ],
+    "roleArn": "arn:aws:iam::123456789:role/polaris-catalog-role"
+  }
+}
+
+# Polaris will:
+1. Create IAM trust relationship with this role
+2. Use it to vend credentials for all tables in this catalog
+3. Scope credentials to specific S3 prefixes based on table location
+                </div>
+            </div>
+        </div>
+
+        <!-- BENEFITS TAB -->
+        <div id="benefits" class="tab-content">
+            <div class="diagram-section">
+                <h2 class="section-title">Why Choose Apache Polaris?</h2>
+                
+                <div class="benefits-grid">
+                    <div class="benefit-card">
+                        <div class="benefit-title">🔐 Enterprise Governance Built-In</div>
+                        <div class="benefit-desc">
+                            Unlike HMS (requires Ranger) or Nessie (basic RBAC), Polaris has full enterprise RBAC with:
+                            <ul>
+                                <li>Fine-grained permissions (catalog, namespace, table, view)</li>
+                                <li>Principal roles for user grouping</li>
+                                <li>Catalog roles for resource permissions</li>
+                                <li>Many-to-many relationship flexibility</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🛡️ Superior Security</div>
+                        <div class="benefit-desc">
+                            Credential vending eliminates long-lived storage credentials:
+                            <ul>
+                                <li>STS-based temporary credentials (AWS)</li>
+                                <li>Automatic expiration after query completion</li>
+                                <li>Least-privilege scoped access</li>
+                                <li>No credentials stored in query engine configs</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🌐 Multi-Engine Interoperability</div>
+                        <div class="benefit-desc">
+                            Standard Iceberg REST API means seamless integration:
+                            <ul>
+                                <li>Spark, Flink, Trino, Presto</li>
+                                <li>Snowflake, Dremio, Starburst</li>
+                                <li>Any Iceberg REST-compatible engine</li>
+                                <li>Consistent governance across all engines</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🏢 Catalog Federation</div>
+                        <div class="benefit-desc">
+                            "Catalog of Catalogs" capability:
+                            <ul>
+                                <li>Manage internal Polaris catalogs</li>
+                                <li>Connect to external catalogs (Nessie, Gravitino)</li>
+                                <li>Apply uniform governance across all</li>
+                                <li>Centralized discovery and access control</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">☁️ Cloud-Native Design</div>
+                        <div class="benefit-desc">
+                            Built for multi-cloud from day one:
+                            <ul>
+                                <li>AWS S3, Azure Blob, GCS support</li>
+                                <li>Native integration with cloud IAM</li>
+                                <li>Cross-region deployments</li>
+                                <li>Hybrid cloud support</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">📊 Centralized Metadata Management</div>
+                        <div class="benefit-desc">
+                            Single source of truth for all Iceberg tables:
+                            <ul>
+                                <li>Unified catalog across teams and engines</li>
+                                <li>Consistent naming and organization</li>
+                                <li>Namespace support (like databases/schemas)</li>
+                                <li>View support for virtual tables</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🔄 Atomic Operations</div>
+                        <div class="benefit-desc">
+                            REST API ensures atomic metadata updates:
+                            <ul>
+                                <li>No partial commits visible to readers</li>
+                                <li>Concurrent writes handled safely</li>
+                                <li>Optimistic concurrency control</li>
+                                <li>Snapshot isolation for reads</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">📈 Scalability</div>
+                        <div class="benefit-desc">
+                            Designed for enterprise-scale workloads:
+                            <ul>
+                                <li>Thousands of tables per catalog</li>
+                                <li>Hundreds of concurrent users</li>
+                                <li>Multiple catalogs per deployment</li>
+                                <li>Efficient metadata caching</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🔍 Audit & Compliance</div>
+                        <div class="benefit-desc">
+                            Complete audit trail for compliance:
+                            <ul>
+                                <li>Every access attempt logged</li>
+                                <li>Authorization decisions tracked</li>
+                                <li>Credential vending audited</li>
+                                <li>Integration with enterprise SIEM</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🆓 Open Source & Vendor Neutral</div>
+                        <div class="benefit-desc">
+                            Apache 2.0 licensed, community-driven:
+                            <ul>
+                                <li>No vendor lock-in</li>
+                                <li>Self-host on your infrastructure</li>
+                                <li>OR use managed service (Snowflake)</li>
+                                <li>Active community development</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🔌 External Policy Integration</div>
+                        <div class="benefit-desc">
+                            Flexible policy enforcement:
+                            <ul>
+                                <li>Built-in RBAC for most use cases</li>
+                                <li>OPA integration for complex policies</li>
+                                <li>Custom PDP support</li>
+                                <li>Policy as code workflows</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🚀 Future-Ready</div>
+                        <div class="benefit-desc">
+                            Active roadmap with upcoming features:
+                            <ul>
+                                <li>Policy store for data governance</li>
+                                <li>Delta Lake format support (as foreign tables)</li>
+                                <li>Web UI for catalog browsing</li>
+                                <li>Enhanced federation capabilities</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COMPARISON TAB -->
+        <div id="comparison" class="tab-content">
+            <div class="diagram-section">
+                <h2 class="section-title">Polaris vs Other Catalogs</h2>
+                
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Polaris</th>
+                            <th>Nessie</th>
+                            <th>HMS</th>
+                            <th>Unity Catalog</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Built-in RBAC</strong></td>
+                            <td class="check">✓✓ Full enterprise RBAC</td>
+                            <td class="check">✓ Branch/path-based</td>
+                            <td class="cross">✗ Requires Ranger</td>
+                            <td class="check">✓✓ Full RBAC</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Credential Vending</strong></td>
+                            <td class="check">✓✓ STS-based, temporary</td>
+                            <td class="check">✓ Basic vending</td>
+                            <td class="cross">✗ Engines manage credentials</td>
+                            <td class="check">✓ Unity-specific</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Granularity</strong></td>
+                            <td class="check">Catalog, Namespace, Table, View</td>
+                            <td>Branch, Namespace, Path</td>
+                            <td>Table-level (via Ranger)</td>
+                            <td class="check">Catalog, Schema, Table, Column</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Versioning/Branching</strong></td>
+                            <td class="cross">✗ No (catalog only)</td>
+                            <td class="check">✓✓ Git-like</td>
+                            <td class="cross">✗</td>
+                            <td class="cross">✗</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Multi-Engine Support</strong></td>
+                            <td class="check">✓✓ Any REST client</td>
+                            <td class="check">✓✓ Any REST client</td>
+                            <td class="check">✓ Via Thrift</td>
+                            <td>⚠️ Databricks-centric</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Catalog Federation</strong></td>
+                            <td class="check">✓✓ Internal + External</td>
+                            <td class="cross">✗</td>
+                            <td class="cross">✗</td>
+                            <td class="check">✓ Delta Sharing</td>
+                        </tr>
+                        <tr>
+                            <td><strong>REST API</strong></td>
+                            <td class="check">✓ Iceberg standard</td>
+                            <td class="check">✓ Iceberg standard</td>
+                            <td class="cross">✗ Thrift only</td>
+                            <td class="check">✓ Unity-specific</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cloud Native</strong></td>
+                            <td class="check">✓✓ Multi-cloud</td>
+                            <td class="check">✓✓ Multi-cloud</td>
+                            <td class="cross">Single region</td>
+                            <td class="check">✓ Databricks clouds</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Open Source</strong></td>
+                            <td class="check">✓ Apache 2.0</td>
+                            <td class="check">✓ Apache 2.0</td>
+                            <td class="check">✓ Apache 2.0</td>
+                            <td class="check">✓ Open source</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Vendor Neutral</strong></td>
+                            <td class="check">✓✓ Truly neutral</td>
+                            <td class="check">✓✓ Truly neutral</td>
+                            <td class="check">✓ Independent</td>
+                            <td class="cross">✗ Databricks-owned</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Deployment Options</strong></td>
+                            <td class="check">Self-host OR managed</td>
+                            <td class="check">Self-host OR managed (Dremio)</td>
+                            <td>Self-host only</td>
+                            <td>Databricks managed</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Operational Complexity</strong></td>
+                            <td>Medium (REST service)</td>
+                            <td>Medium (REST service + DB)</td>
+                            <td class="cross">High (HMS+DB+Ranger+ZK)</td>
+                            <td class="check">Low (fully managed)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Format Support</strong></td>
+                            <td>Iceberg (Delta planned)</td>
+                            <td>Iceberg only</td>
+                            <td>All formats</td>
+                            <td class="check">Iceberg, Delta, Parquet</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Best For</strong></td>
+                            <td class="check">Enterprise governance</td>
+                            <td class="check">Git workflows</td>
+                            <td>Legacy systems</td>
+                            <td>Databricks users</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">When to Choose Polaris</h2>
+                
+                <div class="architecture-diagram">
+                    <div class="arch-component" style="border-color: var(--accent-green);">
+                        <div class="arch-component-title">✓ Use Polaris If...</div>
+                        <div class="arch-component-desc">
+                            ✓ You need enterprise-grade governance<br>
+                            ✓ You use multiple query engines<br>
+                            ✓ You want vendor neutrality<br>
+                            ✓ Security is a top priority<br>
+                            ✓ You need credential vending<br>
+                            ✓ You want catalog federation<br>
+                            ✓ You're building new infrastructure<br>
+                            ✓ Compliance/audit is critical<br>
+                            ✓ Multi-cloud deployment
+                        </div>
+                    </div>
+
+                    <div class="arch-component" style="border-color: var(--accent-orange);">
+                        <div class="arch-component-title">⚠️ Consider Alternatives If...</div>
+                        <div class="arch-component-desc">
+                            • You need Git-like versioning → Use Nessie<br>
+                            • You're all-in on Databricks → Unity Catalog<br>
+                            • You have legacy HMS → Might stick with it<br>
+                            • You need Delta/Hudi support → Unity Catalog<br>
+                            • You want column-level security → Unity Catalog<br>
+                            • Simple setup is critical → AWS Glue
+                        </div>
+                    </div>
+
+                    <div class="arch-component" style="border-color: var(--accent-blue);">
+                        <div class="arch-component-title">💡 Best of Both Worlds</div>
+                        <div class="arch-component-desc">
+                            <strong>Polaris + Nessie:</strong><br>
+                            Use Nessie as external catalog in Polaris<br><br>
+                            ✓ Get Git versioning from Nessie<br>
+                            ✓ Get RBAC governance from Polaris<br>
+                            ✓ Centralized security<br>
+                            ✓ Best of both platforms!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- USE CASES TAB -->
+        <div id="use-cases" class="tab-content">
+            <div class="diagram-section">
+                <h2 class="section-title">Real-World Use Cases</h2>
+                
+                <div class="benefits-grid">
+                    <div class="benefit-card">
+                        <div class="benefit-title">🏦 Financial Services</div>
+                        <div class="benefit-desc">
+                            <strong>Challenge:</strong> Strict data governance, audit requirements, multi-team access<br><br>
+                            <strong>Polaris Solution:</strong>
+                            <ul>
+                                <li>Fine-grained RBAC for different business units</li>
+                                <li>Complete audit trail for compliance</li>
+                                <li>Credential vending for zero standing privileges</li>
+                                <li>Namespace isolation for PII data</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🏥 Healthcare</div>
+                        <div class="benefit-desc">
+                            <strong>Challenge:</strong> HIPAA compliance, patient data protection<br><br>
+                            <strong>Polaris Solution:</strong>
+                            <ul>
+                                <li>Role-based access ensures only authorized access</li>
+                                <li>Short-lived credentials reduce breach risk</li>
+                                <li>Audit logs for compliance reporting</li>
+                                <li>Catalog-level encryption key management (planned)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🛒 E-commerce</div>
+                        <div class="benefit-desc">
+                            <strong>Challenge:</strong> Multiple teams (analytics, ML, product) accessing same data<br><br>
+                            <strong>Polaris Solution:</strong>
+                            <ul>
+                                <li>Separate principal roles for each team</li>
+                                <li>Shared catalogs with different access levels</li>
+                                <li>ML team gets read access to product tables</li>
+                                <li>Analytics team has broader permissions</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🌐 Multi-Cloud Data Platform</div>
+                        <div class="benefit-desc">
+                            <strong>Challenge:</strong> Data spread across AWS, Azure, GCP<br><br>
+                            <strong>Polaris Solution:</strong>
+                            <ul>
+                                <li>Single catalog across all clouds</li>
+                                <li>Unified governance policies</li>
+                                <li>Cloud-native credential vending for each</li>
+                                <li>Consistent access control everywhere</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🔬 Research & Development</div>
+                        <div class="benefit-desc">
+                            <strong>Challenge:</strong> Data scientists need access but shouldn't write to prod<br><br>
+                            <strong>Polaris Solution:</strong>
+                            <ul>
+                                <li>DataScientist principal role with read-only access</li>
+                                <li>Separate dev catalog with write access</li>
+                                <li>External catalog integration with Nessie for experiments</li>
+                                <li>Easy to promote findings to production</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="benefit-card">
+                        <div class="benefit-title">🏭 Manufacturing IoT</div>
+                        <div class="benefit-desc">
+                            <strong>Challenge:</strong> Real-time sensor data, multiple factories, different access needs<br><br>
+                            <strong>Polaris Solution:</strong>
+                            <ul>
+                                <li>Namespace per factory for isolation</li>
+                                <li>Streaming engines (Flink) write via Polaris</li>
+                                <li>BI tools read with appropriate permissions</li>
+                                <li>Credential vending for secure IoT gateways</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">Migration Path to Polaris</h2>
+                
+                <div class="visual-flow">
+                    <div class="flow-layer">
+                        <div class="flow-box" style="background: rgba(255, 107, 53, 0.05); border-color: var(--accent-red);">
+                            <strong>Current State: HMS</strong><br>
+                            Legacy HMS + Ranger<br>
+                            Tables spread across multiple metastores<br>
+                            Complex operational overhead
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓ Phase 1</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box" style="background: rgba(255, 107, 53, 0.05); border-color: var(--accent-orange);">
+                            <strong>Deploy Polaris Alongside HMS</strong><br>
+                            Stand up Polaris instance<br>
+                            Configure storage connections<br>
+                            Define principal and catalog roles<br>
+                            <em>HMS continues serving existing workloads</em>
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓ Phase 2</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box" style="background: rgba(189, 147, 249, 0.05); border-color: var(--accent-purple);">
+                            <strong>Migrate New Tables to Polaris</strong><br>
+                            All new Iceberg tables go to Polaris<br>
+                            Teams start using Polaris for new projects<br>
+                            Gain experience with RBAC model<br>
+                            <em>Old tables still in HMS</em>
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓ Phase 3</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box" style="background: rgba(0, 212, 255, 0.05); border-color: var(--accent-blue);">
+                            <strong>Migrate High-Value Tables</strong><br>
+                            Use Polaris catalog migrator tool<br>
+                            Migrate critical tables from HMS<br>
+                            Update query engine configurations<br>
+                            Validate with dual-running period
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓ Phase 4</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box highlight">
+                            <strong>Fully on Polaris</strong><br>
+                            All Iceberg tables in Polaris<br>
+                            HMS decommissioned (or kept for Hive)<br>
+                            Unified governance across organization<br>
+                            <span style="color: var(--accent-green);">✓ Migration complete!</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-box-title">Migration Tools</div>
+                    Polaris provides a <strong>catalog migrator</strong> tool that can migrate tables from:
+                    <ul>
+                        <li>AWS Glue</li>
+                        <li>Hive Metastore</li>
+                        <li>Other Iceberg REST catalogs</li>
+                    </ul>
+                    This tool copies metadata references without moving data, making migration fast and safe.
+                </div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: var(--accent-green);"></div>
+                <span>Advantage / Supported</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: var(--accent-red);"></div>
+                <span>Limitation / Not Supported</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: var(--accent-blue);"></div>
+                <span>Key Feature</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: var(--accent-purple);"></div>
+                <span>RBAC Component</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabId) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabId).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
