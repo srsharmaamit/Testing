@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nessie & Apache Iceberg - Comprehensive Visual Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Mono:wght@400;700&family=Crimson+Pro:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0e15;
+            --bg-card: #151922;
+            --bg-card-hover: #1d2330;
+            --accent-blue: #00d4ff;
+            --accent-orange: #ff6b35;
+            --accent-green: #00ff88;
+            --accent-red: #ff3366;
+            --accent-purple: #bd93f9;
+            --text-primary: #e8eaed;
+            --text-secondary: #9ca3af;
+            --border: #2d3748;
+        }
+        
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 2rem;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-family: 'Crimson Pro', serif;
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+            animation: fadeInDown 0.8s ease-out;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+            overflow-x: auto;
+        }
+        
+        .tab {
+            padding: 1rem 2rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .tab:hover {
+            color: var(--accent-blue);
+        }
+        
+        .tab.active {
+            color: var(--accent-blue);
+        }
+        
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent-blue);
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                width: 0;
+            }
+            to {
+                width: 100%;
+            }
+        }
+        
+        .section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .section:hover {
+            border-color: var(--accent-blue);
+            box-shadow: 0 8px 32px rgba(0, 212, 255, 0.1);
+        }
+        
+        .section h2 {
+            font-family: 'Crimson Pro', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .section h2::before {
+            content: '▸';
+            font-size: 1.5rem;
+        }
+        
+        .section h3 {
+            color: var(--accent-purple);
+            margin: 20px 0 10px 0;
+            font-size: 1.3em;
+        }
+        
+        .architecture-diagram {
+            background: var(--bg-card-hover);
+            padding: 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border: 1px solid var(--border);
+        }
+        
+        .layer {
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 10px;
+            position: relative;
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .layer:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-blue);
+            box-shadow: 0 8px 24px rgba(0, 212, 255, 0.2);
+        }
+        
+        .layer-query {
+            background: linear-gradient(135deg, rgba(240, 147, 251, 0.1), rgba(245, 87, 108, 0.1));
+            border-color: #f093fb;
+        }
+        
+        .layer-nessie {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(189, 147, 249, 0.1));
+            border-color: var(--accent-blue);
+        }
+        
+        .layer-iceberg {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(56, 249, 215, 0.1));
+            border-color: var(--accent-green);
+        }
+        
+        .layer-storage {
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(254, 225, 64, 0.1));
+            border-color: var(--accent-orange);
+        }
+
+        .layer h3 {
+            color: var(--text-primary) !important;
+            margin: 0 0 10px 0 !important;
+        }
+
+        .layer p, .layer ul {
+            color: var(--text-secondary);
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .feature-card {
+            background: var(--bg-card-hover);
+            border: 2px solid var(--border);
+            padding: 20px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-blue);
+            box-shadow: 0 8px 24px rgba(0, 212, 255, 0.2);
+        }
+        
+        .feature-card h4 {
+            color: var(--accent-blue);
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .feature-card p, .feature-card ul, .feature-card li {
+            color: var(--text-secondary);
+        }
+        
+        .benefit {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+        
+        .drawback {
+            color: var(--accent-red);
+            font-weight: 600;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: var(--bg-card-hover);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .comparison-table th {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(189, 147, 249, 0.2));
+            padding: 1rem;
+            text-align: left;
+            font-weight: 700;
+            color: var(--accent-blue);
+            border-bottom: 2px solid var(--border);
+        }
+        
+        .comparison-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        
+        .comparison-table tr:hover {
+            background: rgba(0, 212, 255, 0.05);
+        }
+        
+        .workflow-step {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            padding: 15px;
+            background: var(--bg-card-hover);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .workflow-step:hover {
+            border-color: var(--accent-blue);
+            box-shadow: 0 4px 16px rgba(0, 212, 255, 0.1);
+        }
+
+        .workflow-step div {
+            color: var(--text-secondary);
+        }
+
+        .workflow-step strong {
+            color: var(--text-primary);
+        }
+        
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .code-block {
+            background: #1a1d29;
+            border: 1px solid var(--border);
+            color: var(--accent-green);
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+        
+        .alert-info {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 212, 255, 0.05));
+            border-left: 4px solid var(--accent-green);
+            color: var(--text-secondary);
+        }
+
+        .alert-info strong {
+            color: var(--accent-green);
+        }
+        
+        .alert-warning {
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(255, 107, 53, 0.05));
+            border-left: 4px solid var(--accent-orange);
+            color: var(--text-secondary);
+        }
+
+        .alert-warning strong {
+            color: var(--accent-orange);
+        }
+        
+        .alert-danger {
+            background: linear-gradient(135deg, rgba(255, 51, 102, 0.1), rgba(255, 107, 53, 0.05));
+            border-left: 4px solid var(--accent-red);
+            color: var(--text-secondary);
+        }
+
+        .alert-danger strong {
+            color: var(--accent-red);
+        }
+        
+        .visual-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .flow-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .flow-box {
+            flex: 1;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 600;
+            background: var(--bg-card-hover);
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .flow-box:hover {
+            transform: scale(1.05);
+            border-color: var(--accent-green);
+        }
+        
+        .arrow {
+            font-size: 2em;
+            color: var(--accent-blue);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        
+        ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+        
+        li {
+            margin: 8px 0;
+            color: var(--text-secondary);
+        }
+        
+        .highlight {
+            background: rgba(0, 212, 255, 0.2);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 700;
+            color: var(--accent-blue);
+        }
+        
+        .git-visual {
+            background: var(--bg-card-hover);
+            padding: 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border: 1px solid var(--border);
+        }
+        
+        .branch {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+        }
+        
+        .commit {
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border-radius: 50%;
+            margin: 0 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8em;
+        }
+        
+        .branch-line {
+            height: 2px;
+            background: var(--accent-blue);
+            flex: 1;
+        }
+        
+        .branch-label {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-right: 10px;
+        }
+
+        .check {
+            color: var(--accent-green);
+            font-weight: 700;
+        }
+
+        .cross {
+            color: var(--accent-red);
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Nessie & Apache Iceberg</h1>
+        <p class="subtitle">Complete Visual Guide - Git for Your Data Lake</p>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="openTab(event, 'overview')">Overview</button>
+            <button class="tab" onclick="openTab(event, 'architecture')">Architecture</button>
+            <button class="tab" onclick="openTab(event, 'how-it-works')">How It Works</button>
+            <button class="tab" onclick="openTab(event, 'benefits')">Benefits</button>
+            <button class="tab" onclick="openTab(event, 'drawbacks')">Drawbacks</button>
+            <button class="tab" onclick="openTab(event, 'governance')">Governance</button>
+            <button class="tab" onclick="openTab(event, 'comparison')">Catalog Comparison</button>
+        </div>
+        
+        <!-- OVERVIEW TAB -->
+        <div id="overview" class="tab-content active">
+            <div class="section">
+                <h2>What is Nessie?</h2>
+                <p><strong>Nessie</strong> is a transactional catalog for Apache Iceberg that brings <strong>Git-like version control</strong> to your data lake. It's like GitHub for your data!</p>
+                
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>🌳 Branching & Merging</h4>
+                        <p>Create isolated development branches, test changes, and merge atomically back to production</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>⏱️ Time Travel</h4>
+                        <p>Access any historical state of your entire catalog with commits, tags, and timestamps</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>🔄 Catalog Versioning</h4>
+                        <p>Version control at the catalog level - track changes across ALL tables simultaneously</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>🎯 Multi-Table Transactions</h4>
+                        <p>Approximate multi-table transactions by branching, committing, and merging atomically</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>Key Concept: Git for Data</h2>
+                <div class="git-visual">
+                    <div class="branch">
+                        <span class="branch-label">main</span>
+                        <div class="commit">C1</div>
+                        <div class="branch-line"></div>
+                        <div class="commit">C2</div>
+                        <div class="branch-line"></div>
+                        <div class="commit">C3</div>
+                        <div class="branch-line"></div>
+                        <div class="commit">C6</div>
+                    </div>
+                    <div class="branch">
+                        <span class="branch-label">dev</span>
+                        <div style="width: 60px;"></div>
+                        <div class="commit">C4</div>
+                        <div class="branch-line"></div>
+                        <div class="commit">C5</div>
+                        <div class="branch-line" style="opacity: 0.3;"></div>
+                    </div>
+                </div>
+                <p><strong>Each commit</strong> represents a catalog state with metadata pointing to specific Iceberg table snapshots. You can:</p>
+                <ul>
+                    <li>Create branches for ETL testing</li>
+                    <li>Tag production releases</li>
+                    <li>Roll back the entire catalog on errors</li>
+                    <li>Cherry-pick specific changes between branches</li>
+                </ul>
+            </div>
+            
+            <div class="alert alert-info">
+                <strong>💡 Pro Tip:</strong> Nessie is designed specifically for Apache Iceberg tables. It's the only open-source, self-managed catalog that provides full Iceberg REST catalog support.
+            </div>
+        </div>
+        
+        <!-- ARCHITECTURE TAB -->
+        <div id="architecture" class="tab-content">
+            <div class="section">
+                <h2>Nessie Architecture Layers</h2>
+                <div class="architecture-diagram">
+                    <div class="layer layer-query">
+                        <h3 style="margin:0;">Query Engines Layer</h3>
+                        <p>Spark • Flink • Trino • Presto • Dremio • Hive</p>
+                    </div>
+                    
+                    <div style="text-align: center; font-size: 2em; color: #cbd5e0;">↓</div>
+                    
+                    <div class="layer layer-nessie">
+                        <h3 style="margin:0;">Nessie Catalog (REST API)</h3>
+                        <p><strong>Responsibilities:</strong></p>
+                        <ul>
+                            <li>Maintains commit history (branches, tags, merges)</li>
+                            <li>Tracks current metadata.json location for each table</li>
+                            <li>Handles authentication & authorization</li>
+                            <li>Manages namespace organization</li>
+                            <li>Provides Git-like operations (commit, branch, merge)</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="text-align: center; font-size: 2em; color: #cbd5e0;">↓</div>
+                    
+                    <div class="layer layer-iceberg">
+                        <h3 style="margin:0;">Apache Iceberg Layer</h3>
+                        <p><strong>Table Metadata Management:</strong></p>
+                        <ul>
+                            <li>metadata.json files (schema, partition spec, snapshots)</li>
+                            <li>Manifest files (list of data files)</li>
+                            <li>Snapshot tracking (individual table versions)</li>
+                            <li>Schema evolution support</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="text-align: center; font-size: 2em; color: #cbd5e0;">↓</div>
+                    
+                    <div class="layer layer-storage">
+                        <h3 style="margin:0;">Storage Layer</h3>
+                        <p>S3 • ADLS Gen2 • Google Cloud Storage • HDFS • MinIO</p>
+                        <p><em>Stores: Parquet data files, metadata.json, manifest files</em></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>How Nessie Tracks Iceberg Tables</h2>
+                <div class="workflow-step">
+                    <div class="step-number">1</div>
+                    <div>
+                        <strong>Nessie Commits Store References</strong><br>
+                        Each Nessie commit contains the snapshot ID, schema ID, partition spec ID, and sort order ID from the Iceberg table metadata
+                    </div>
+                </div>
+                
+                <div class="workflow-step">
+                    <div class="step-number">2</div>
+                    <div>
+                        <strong>On-Reference State</strong><br>
+                        Nessie stores these IDs per branch/tag (called "on-reference-state"), pointing to the current metadata.json file
+                    </div>
+                </div>
+                
+                <div class="workflow-step">
+                    <div class="step-number">3</div>
+                    <div>
+                        <strong>Query Engines Request Metadata</strong><br>
+                        When Spark queries a table, it asks Nessie: "Where's the metadata for table X on branch main?"
+                    </div>
+                </div>
+                
+                <div class="workflow-step">
+                    <div class="step-number">4</div>
+                    <div>
+                        <strong>Nessie Returns Location</strong><br>
+                        Nessie responds with the storage location of the current metadata.json (e.g., s3://bucket/table/metadata/v3.metadata.json)
+                    </div>
+                </div>
+                
+                <div class="workflow-step">
+                    <div class="step-number">5</div>
+                    <div>
+                        <strong>Iceberg Handles the Rest</strong><br>
+                        The query engine reads the metadata.json, follows the manifest files, and queries the Parquet data
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alert alert-warning">
+                <strong>⚠️ Important:</strong> All metadata JSON files must be retained when using Nessie. Built-in Iceberg maintenance procedures cannot be used without careful consideration.
+            </div>
+        </div>
+        
+        <!-- HOW IT WORKS TAB -->
+        <div id="how-it-works" class="tab-content">
+            <div class="section">
+                <h2>Nessie Workflow Example</h2>
+                
+                <h3>Scenario: Testing ETL Pipeline</h3>
+                
+                <div class="visual-flow">
+                    <div class="flow-item">
+                        <div class="flow-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            Create Branch "etl-test"<br>from main
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center;">↓</div>
+                    
+                    <div class="flow-item">
+                        <div class="flow-box" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                            Commit 1: Update Table A<br>
+                            Commit 2: Insert into Table B<br>
+                            Commit 3: Delete from Table C
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center;">↓</div>
+                    
+                    <div class="flow-item">
+                        <div class="flow-box" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                            Test & Validate on<br>"etl-test" branch
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center;">↓</div>
+                    
+                    <div class="flow-item">
+                        <div class="flow-box" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                            Merge "etl-test" → main<br>
+                            (Atomic operation)
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center;">↓</div>
+                    
+                    <div class="flow-item">
+                        <div class="flow-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            Production sees all 3 changes<br>simultaneously!
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>Every Iceberg Transaction = Nessie Commit</h2>
+                <div class="code-block">
+-- Spark SQL example
+USE CATALOG nessie;
+
+-- Create a branch
+CALL nessie.system.create_branch('dev', 'main');
+
+-- Switch to dev branch
+USE REFERENCE dev IN nessie;
+
+-- Every operation creates a Nessie commit
+INSERT INTO sales VALUES (1, 'Product A', 100);  -- Commit #1
+UPDATE customers SET status = 'active';          -- Commit #2
+DELETE FROM temp_data WHERE date < '2024-01-01'; -- Commit #3
+
+-- View commit history
+CALL nessie.system.show_log();
+
+-- Merge back to main atomically
+CALL nessie.system.merge_branch('dev', 'main');
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>Multi-Table Transaction Approximation</h2>
+                <p>While Iceberg doesn't have true multi-table transactions, Nessie approximates them:</p>
+                
+                <div class="workflow-step">
+                    <div class="step-number">1</div>
+                    <div>
+                        Create a new branch (e.g., "transaction-branch")
+                    </div>
+                </div>
+                
+                <div class="workflow-step">
+                    <div class="step-number">2</div>
+                    <div>
+                        Perform multiple operations on different tables (each is its own commit)
+                    </div>
+                </div>
+                
+                <div class="workflow-step">
+                    <div class="step-number">3</div>
+                    <div>
+                        Merge the branch back to main in a single atomic operation
+                    </div>
+                </div>
+                
+                <div class="workflow-step">
+                    <div class="step-number">4</div>
+                    <div>
+                        Production users see all changes appear simultaneously (fast-forward merge)
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <strong>Note:</strong> This isn't a true ACID multi-table transaction at the database level, but it provides atomic visibility for downstream consumers.
+                </div>
+            </div>
+        </div>
+        
+        <!-- BENEFITS TAB -->
+        <div id="benefits" class="tab-content">
+            <div class="section">
+                <h2>✅ Key Benefits of Nessie</h2>
+                
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4 class="benefit">📦 Catalog-Level Versioning</h4>
+                        <p>Track changes across your entire catalog, not just individual tables. Roll back everything with one command.</p>
+                        <div class="code-block" style="font-size: 0.85em;">
+USE REFERENCE tag_v1.0 IN nessie;
+-- Instantly access entire catalog state from release v1.0
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h4 class="benefit">🔒 Isolation & Safety</h4>
+                        <p>Test risky changes on isolated branches without affecting production. No more "hope it works in prod"!</p>
+                        <ul>
+                            <li>Dev/test environments are true copies</li>
+                            <li>Schema changes can be tested safely</li>
+                            <li>Failed experiments just delete the branch</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h4 class="benefit">🔄 Zero-Copy Clones</h4>
+                        <p>Branches don't copy data - they just reference the same storage. Instant environment creation!</p>
+                        <ul>
+                            <li>No storage duplication</li>
+                            <li>Create environments in seconds</li>
+                            <li>Test at scale without cost</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h4 class="benefit">📊 Auditing & Compliance</h4>
+                        <p>Complete immutable history of all changes with author, timestamp, and commit message.</p>
+                        <ul>
+                            <li>Who changed what, when</li>
+                            <li>Reproduce historical states</li>
+                            <li>Regulatory compliance made easier</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h4 class="benefit">🚀 CI/CD for Data</h4>
+                        <p>Implement software engineering practices for data pipelines.</p>
+                        <ul>
+                            <li>Branch for feature development</li>
+                            <li>Test before merge</li>
+                            <li>Tag releases</li>
+                            <li>Automated quality checks</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h4 class="benefit">🌐 REST Catalog Support</h4>
+                        <p>Simplified client configuration - credentials managed server-side.</p>
+                        <div class="code-block" style="font-size: 0.75em;">
+.config("spark.sql.catalog.nessie.type", "rest")
+.config("spark.sql.catalog.nessie.uri", 
+        "http://nessie:19120/iceberg/main/")
+# No storage credentials needed!
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h4 class="benefit">🔧 Self-Managed & Open Source</h4>
+                        <p>Full control over your catalog infrastructure for security and compliance needs.</p>
+                        <ul>
+                            <li>No vendor lock-in</li>
+                            <li>Customizable for your needs</li>
+                            <li>Deploy anywhere (cloud, on-prem)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h4 class="benefit">🤝 Wide Tool Support</h4>
+                        <p>Works with all major query engines that support Iceberg.</p>
+                        <p><strong>Compatible with:</strong> Spark, Flink, Trino, Presto, Dremio, Hive, and any Iceberg REST client</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>Real-World Use Cases</h2>
+                
+                <div class="workflow-step">
+                    <div class="step-number">💼</div>
+                    <div>
+                        <strong>Data Science Experimentation</strong><br>
+                        Clone production catalog to dev branch → Run experiments → Compare results → Merge successful changes
+                    </div>
+                </div>
+                
+                <div class="workflow-step">
+                    <div class="step-number">🧪</div>
+                    <div>
+                        <strong>Schema Evolution Testing</strong><br>
+                        Test schema changes on isolated branch → Validate with real queries → Merge when confident
+                    </div>
+                </div>
+                
+                <div class="workflow-step">
+                    <div class="step-number">📈</div>
+                    <div>
+                        <strong>Time-Travel Analytics</strong><br>
+                        Re-run ML models on historical catalog states → Compare results across time → Ensure reproducibility
+                    </div>
+                </div>
+                
+                <div class="workflow-step">
+                    <div class="step-number">🔄</div>
+                    <div>
+                        <strong>Coordinated Multi-Table Updates</strong><br>
+                        Update fact and dimension tables together on a branch → Merge atomically → No partial updates visible
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- DRAWBACKS TAB -->
+        <div id="drawbacks" class="tab-content">
+            <div class="section">
+                <h2>⚠️ Challenges & Limitations</h2>
+                
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4 class="drawback">🔧 Complex Table Maintenance</h4>
+                        <p><strong>The Problem:</strong></p>
+                        <ul>
+                            <li>All metadata.json files must be retained</li>
+                            <li>Built-in Iceberg maintenance procedures can't be used</li>
+                            <li>Garbage collection is complicated</li>
+                            <li>Requires careful planning for cleanup</li>
+                        </ul>
+                        <div class="alert alert-danger">
+                            <strong>Critical:</strong> "Regular table maintenance in Iceberg is complicated when using Nessie. Please consult Management Services before performing any table maintenance."
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h4 class="drawback">🎓 Learning Curve</h4>
+                        <p><strong>Challenges:</strong></p>
+                        <ul>
+                            <li>Teams need to understand Git concepts</li>
+                            <li>More advanced than simple catalogs</li>
+                            <li>Requires operational expertise</li>
+                            <li>New mental model for data engineers</li>
+                        </ul>
+                        <p><em>Teams accustomed to Hive Metastore may need training time.</em></p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h4 class="drawback">⚙️ Infrastructure Overhead</h4>
+                        <p><strong>Requirements:</strong></p>
+                        <ul>
+                            <li>Nessie server needs to be running</li>
+                            <li>Backend database for version store</li>
+                            <li>Monitoring and maintenance needed</li>
+                            <li>Additional operational complexity</li>
+                        </ul>
+                        <p><em>Managed services (like Dremio Arctic) solve this but add cost.</em></p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h4 class="drawback">🔐 Limited Built-in Governance</h4>
+                        <p><strong>Governance Gaps:</strong></p>
+                        <ul>
+                            <li>Reference-based access control (branches/tags)</li>
+                            <li>Path-based access control</li>
+                            <li>NOT full RBAC like Apache Polaris</li>
+                            <li>Less fine-grained than dedicated governance catalogs</li>
+                        </ul>
+                        <div class="alert alert-warning">
+                            <strong>Workaround:</strong> Use Apache Polaris External Catalogs feature to expose Nessie catalog with Polaris RBAC rules applied.
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h4 class="drawback">📝 Branch Management Complexity</h4>
+                        <p><strong>Operational Challenges:</strong></p>
+                        <ul>
+                            <li>Need strategy for branch cleanup</li>
+                            <li>Can accumulate stale branches</li>
+                            <li>Merge conflicts possible</li>
+                            <li>Requires monitoring and auditing</li>
+                        </ul>
+                        <p><em>Without discipline, branch sprawl can become an issue.</em></p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h4 class="drawback">🎯 Iceberg-Only</h4>
+                        <p><strong>Limited to:</strong></p>
+                        <ul>
+                            <li>Apache Iceberg tables only</li>
+                            <li>Cannot catalog other formats (Delta, Hudi)</li>
+                            <li>No support for non-table objects</li>
+                        </ul>
+                        <p><em>If you need multi-format support, consider lakeFS instead.</em></p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h4 class="drawback">⚡ Not True Multi-Table ACID</h4>
+                        <p><strong>Limitation:</strong></p>
+                        <ul>
+                            <li>Approximates multi-table transactions</li>
+                            <li>Each table operation is separate transaction</li>
+                            <li>Fast-forward merge makes it appear atomic</li>
+                            <li>Not database-level ACID guarantees</li>
+                        </ul>
+                        <p><em>Good enough for most use cases, but not true ACID.</em></p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h4 class="drawback">💾 Storage Metadata Retention</h4>
+                        <p><strong>Storage Implications:</strong></p>
+                        <ul>
+                            <li>Metadata files accumulate over time</li>
+                            <li>Can't aggressively clean old snapshots</li>
+                            <li>Storage costs increase (though small)</li>
+                            <li>Need retention policies</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>When NOT to Use Nessie</h2>
+                
+                <div class="alert alert-warning">
+                    <strong>Consider alternatives if:</strong>
+                    <ul>
+                        <li>You need simple catalog with minimal overhead → Use AWS Glue or Hive Metastore</li>
+                        <li>You need robust RBAC governance → Use Apache Polaris (or combine both)</li>
+                        <li>You use multiple table formats → Use lakeFS</li>
+                        <li>You have very simple ETL with no testing needs → Simpler catalogs may suffice</li>
+                        <li>Your team lacks Git/version control expertise → Training investment required</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- GOVERNANCE TAB -->
+        <div id="governance" class="tab-content">
+            <div class="section">
+                <h2>Nessie Governance Model</h2>
+                
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>🌳 Reference-Based Access Control</h4>
+                        <p>Control access by branches and tags:</p>
+                        <ul>
+                            <li><strong>Branch "prod":</strong> Read-only for most users</li>
+                            <li><strong>Branch "dev":</strong> Read/write for developers</li>
+                            <li><strong>Branch "analytics":</strong> Read-only for analysts</li>
+                        </ul>
+                        <p><em>Users can only see/modify branches they're authorized for.</em></p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h4>📂 Path-Based Access Control</h4>
+                        <p>Control access by table paths:</p>
+                        <div class="code-block" style="font-size: 0.85em;">
+namespace1/table1  → Team A access
+namespace2/table2  → Team B access
+sensitive/pii     → Admin only
+                        </div>
+                        <p>Iceberg tables identified by path, permissions applied accordingly.</p>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <strong>How It Works:</strong> When a user queries a table they don't have access to, Nessie returns an "unauthorized" error to the query engine before any data is touched.
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>Nessie vs Apache Polaris Governance</h2>
+                
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Nessie</th>
+                            <th>Apache Polaris</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Access Control Model</strong></td>
+                            <td>Reference-based (branches) + Path-based</td>
+                            <td>Full RBAC (roles, principals, policies)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Granularity</strong></td>
+                            <td>Branch/tag level, namespace/path level</td>
+                            <td>Table, namespace, view, column level</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Credential Vending</strong></td>
+                            <td>Via REST catalog (S3 signing or vended credentials)</td>
+                            <td>Advanced STS-based temporary credentials</td>
+                        </tr>
+                        <tr>
+                            <td><strong>User Management</strong></td>
+                            <td>Basic (OAuth2, Bearer tokens)</td>
+                            <td>Service principals with principal roles</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Versioning</strong></td>
+                            <td>✅ Git-like branching & versioning</td>
+                            <td>❌ No versioning (catalog only)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Best For</strong></td>
+                            <td>Version control + basic governance</td>
+                            <td>Enterprise governance + fine-grained access</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="section">
+                <h2>Best of Both Worlds: Nessie + Polaris</h2>
+                <div class="architecture-diagram">
+                    <div class="layer" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <h3 style="margin:0; color: white;">Apache Polaris Catalog</h3>
+                        <p>Handles: RBAC, fine-grained permissions, credential vending</p>
+                    </div>
+                    
+                    <div style="text-align: center; font-size: 1.5em; color: #cbd5e0; margin: 10px 0;">
+                        ↓ External Catalog Feature ↓
+                    </div>
+                    
+                    <div class="layer" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                        <h3 style="margin:0; color: white;">Nessie Catalog (Read-Only)</h3>
+                        <p>Provides: Git versioning, branching, time-travel</p>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <strong>Solution:</strong> Use Apache Polaris's "External Catalogs" feature to expose a Nessie catalog with Polaris RBAC rules applied. This gives you Git versioning AND enterprise governance!
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>Audit Trail & Compliance</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>📝 Immutable History</h4>
+                        <p>Every change is recorded with:</p>
+                        <ul>
+                            <li>Author/user who made the change</li>
+                            <li>Timestamp (exact time)</li>
+                            <li>Commit message (what changed)</li>
+                            <li>Commit hash (unique identifier)</li>
+                            <li>Parent commit (lineage)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h4>🔍 Full Traceability</h4>
+                        <p>Answer questions like:</p>
+                        <ul>
+                            <li>Who deleted this table?</li>
+                            <li>When was this schema changed?</li>
+                            <li>What was the data state on Dec 1st?</li>
+                            <li>What changed between releases?</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h4>⏮️ Rollback Capability</h4>
+                        <p>Recover from mistakes:</p>
+                        <ul>
+                            <li>Roll back entire catalog to previous commit</li>
+                            <li>Tag stable states for easy recovery</li>
+                            <li>Cherry-pick specific fixes</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- COMPARISON TAB -->
+        <div id="comparison" class="tab-content">
+            <div class="section">
+                <h2>Iceberg Catalog Comparison</h2>
+                
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Nessie</th>
+                            <th>AWS Glue</th>
+                            <th>Hive Metastore</th>
+                            <th>Apache Polaris</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Deployment</strong></td>
+                            <td>Self-managed or cloud (Dremio)</td>
+                            <td>Managed (AWS only)</td>
+                            <td>Self-managed</td>
+                            <td>Self-managed or managed</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Versioning</strong></td>
+                            <td>✅ Full Git-like versioning</td>
+                            <td>❌ No versioning</td>
+                            <td>❌ No versioning</td>
+                            <td>❌ No versioning</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Branching</strong></td>
+                            <td>✅ Yes</td>
+                            <td>❌ No</td>
+                            <td>❌ No</td>
+                            <td>❌ No</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Catalog Rollback</strong></td>
+                            <td>✅ Yes</td>
+                            <td>❌ No (table-level only via Iceberg)</td>
+                            <td>❌ No (table-level only via Iceberg)</td>
+                            <td>❌ No (table-level only via Iceberg)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Multi-Table Transactions</strong></td>
+                            <td>✅ Approximated via branching</td>
+                            <td>❌ No</td>
+                            <td>❌ No</td>
+                            <td>❌ No</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Access Control</strong></td>
+                            <td>⚠️ Reference + Path based</td>
+                            <td>✅ AWS IAM integration</td>
+                            <td>⚠️ Basic (Ranger integration)</td>
+                            <td>✅ Full RBAC</td>
+                        </tr>
+                        <tr>
+                            <td><strong>REST Catalog</strong></td>
+                            <td>✅ Yes</td>
+                            <td>❌ No</td>
+                            <td>❌ No</td>
+                            <td>✅ Yes</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Credential Vending</strong></td>
+                            <td>✅ Yes (S3 signing or vended)</td>
+                            <td>✅ Via IAM</td>
+                            <td>❌ No</td>
+                            <td>✅ Yes (STS-based)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Table Maintenance</strong></td>
+                            <td>⚠️ Complicated (all metadata must be kept)</td>
+                            <td>✅ Standard Iceberg procedures</td>
+                            <td>✅ Standard Iceberg procedures</td>
+                            <td>✅ Standard Iceberg procedures</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Setup Complexity</strong></td>
+                            <td>⚠️ Moderate (server required)</td>
+                            <td>✅ Easy (managed)</td>
+                            <td>⚠️ Complex</td>
+                            <td>⚠️ Moderate</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Learning Curve</strong></td>
+                            <td>⚠️ Requires Git knowledge</td>
+                            <td>✅ Familiar for AWS users</td>
+                            <td>✅ Traditional catalog</td>
+                            <td>⚠️ Moderate</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cost</strong></td>
+                            <td>Free (OSS) or managed service fee</td>
+                            <td>Pay per request</td>
+                            <td>Infrastructure costs</td>
+                            <td>Free (OSS) or managed service fee</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Best For</strong></td>
+                            <td>Teams needing Git workflow for data</td>
+                            <td>AWS-native deployments</td>
+                            <td>Legacy systems, on-prem</td>
+                            <td>Enterprise governance needs</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="section">
+                <h2>Decision Framework</h2>
+                
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>Choose Nessie if you need:</h4>
+                        <ul>
+                            <li>✅ Git-like version control for data</li>
+                            <li>✅ Branching for testing/development</li>
+                            <li>✅ Catalog-level rollback</li>
+                            <li>✅ Multi-table transaction simulation</li>
+                            <li>✅ Self-managed infrastructure</li>
+                            <li>✅ CI/CD for data pipelines</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h4>Choose AWS Glue if you:</h4>
+                        <ul>
+                            <li>✅ Are all-in on AWS</li>
+                            <li>✅ Want fully managed catalog</li>
+                            <li>✅ Don't need versioning</li>
+                            <li>✅ Prefer simple setup</li>
+                            <li>✅ Need AWS IAM integration</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h4>Choose Apache Polaris if you need:</h4>
+                        <ul>
+                            <li>✅ Enterprise RBAC governance</li>
+                            <li>✅ Fine-grained access control</li>
+                            <li>✅ Multi-catalog federation</li>
+                            <li>✅ Advanced credential vending</li>
+                            <li>✅ Column-level security</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <h4>Use BOTH (Nessie + Polaris) if you need:</h4>
+                        <ul>
+                            <li>✅ Git versioning AND enterprise governance</li>
+                            <li>✅ Branching AND fine-grained RBAC</li>
+                            <li>✅ Best of both worlds</li>
+                        </ul>
+                        <p><em>Via Polaris External Catalogs feature</em></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <script>
+        function openTab(evt, tabName) {
+            // Hide all tab contents
+            const tabContents = document.getElementsByClassName('tab-content');
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove('active');
+            }
+            
+            // Remove active class from all tabs
+            const tabs = document.getElementsByClassName('tab');
+            for (let i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove('active');
+            }
+            
+            // Show selected tab content and mark tab as active
+            document.getElementById(tabName).classList.add('active');
+            evt.currentTarget.classList.add('active');
+        }
+    </script>
+</body>
+</html>
