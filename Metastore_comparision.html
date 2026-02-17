@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HMS vs Modern Catalogs for Apache Iceberg</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Mono:wght@400;700&family=Crimson+Pro:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0e15;
+            --bg-card: #151922;
+            --bg-card-hover: #1d2330;
+            --accent-blue: #00d4ff;
+            --accent-orange: #ff6b35;
+            --accent-green: #00ff88;
+            --accent-red: #ff3366;
+            --accent-purple: #bd93f9;
+            --text-primary: #e8eaed;
+            --text-secondary: #9ca3af;
+            --border: #2d3748;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 2rem;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-family: 'Crimson Pro', serif;
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+
+        .tab {
+            padding: 1rem 2rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .tab:hover {
+            color: var(--accent-blue);
+        }
+
+        .tab.active {
+            color: var(--accent-blue);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent-blue);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .diagram-section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .diagram-section:hover {
+            border-color: var(--accent-blue);
+            box-shadow: 0 8px 32px rgba(0, 212, 255, 0.1);
+        }
+
+        .section-title {
+            font-family: 'Crimson Pro', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .section-title::before {
+            content: '▸';
+            font-size: 1.5rem;
+        }
+
+        .architecture-diagram {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .arch-component {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(189, 147, 249, 0.05));
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .arch-component:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-blue);
+            box-shadow: 0 8px 24px rgba(0, 212, 255, 0.2);
+        }
+
+        .arch-component-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: var(--accent-blue);
+        }
+
+        .arch-component-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .flow-box {
+            background: var(--bg-card-hover);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 1.5rem;
+            min-width: 200px;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .flow-box:hover {
+            transform: scale(1.05);
+            border-color: var(--accent-green);
+        }
+
+        .flow-box.problem {
+            border-color: var(--accent-red);
+            background: rgba(255, 51, 102, 0.05);
+        }
+
+        .flow-arrow {
+            font-size: 2rem;
+            color: var(--accent-blue);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .drawbacks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .drawback-card {
+            background: linear-gradient(135deg, rgba(255, 51, 102, 0.1), rgba(255, 107, 53, 0.05));
+            border: 2px solid var(--accent-red);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .drawback-card::before {
+            content: '⚠';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 2rem;
+            opacity: 0.2;
+        }
+
+        .drawback-card:hover {
+            transform: translateX(4px);
+            border-color: var(--accent-orange);
+            box-shadow: 0 4px 16px rgba(255, 107, 53, 0.3);
+        }
+
+        .drawback-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            color: var(--accent-red);
+        }
+
+        .drawback-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            background: var(--bg-card-hover);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .comparison-table th {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(189, 147, 249, 0.2));
+            padding: 1rem;
+            text-align: left;
+            font-weight: 700;
+            color: var(--accent-blue);
+            border-bottom: 2px solid var(--border);
+        }
+
+        .comparison-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .comparison-table tr:hover {
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .check {
+            color: var(--accent-green);
+            font-weight: 700;
+        }
+
+        .cross {
+            color: var(--accent-red);
+            font-weight: 700;
+        }
+
+        .code-block {
+            background: #1a1d29;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--accent-green);
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        .highlight {
+            background: rgba(0, 212, 255, 0.2);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 700;
+            color: var(--accent-blue);
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 212, 255, 0.05));
+            border-left: 4px solid var(--accent-green);
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 8px;
+        }
+
+        .info-box-title {
+            font-weight: 700;
+            color: var(--accent-green);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                width: 0;
+            }
+            to {
+                width: 100%;
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .legend {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .visual-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .flow-layer {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .vertical-arrow {
+            text-align: center;
+            font-size: 2rem;
+            color: var(--accent-blue);
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>HMS vs Modern Catalogs for Apache Iceberg</h1>
+        <p class="subtitle">Understanding the limitations and evolution of Iceberg catalog implementations</p>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('overview')">Overview</button>
+            <button class="tab" onclick="switchTab('hms-architecture')">HMS Architecture</button>
+            <button class="tab" onclick="switchTab('drawbacks')">HMS Drawbacks</button>
+            <button class="tab" onclick="switchTab('comparison')">Modern Catalogs</button>
+        </div>
+
+        <div id="overview" class="tab-content active">
+            <div class="diagram-section">
+                <h2 class="section-title">How HMS Handles Iceberg Tables</h2>
+                
+                <div class="visual-flow">
+                    <div class="flow-layer">
+                        <div class="flow-box">
+                            <div class="arch-component-title">Query Engine</div>
+                            <div class="arch-component-desc">Spark, Trino, Flink</div>
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box">
+                            <div class="arch-component-title">Hive Metastore</div>
+                            <div class="arch-component-desc">Stores table location pointer</div>
+                            <div class="code-block" style="margin-top: 1rem; text-align: left;">
+table_params {<br>
+&nbsp;&nbsp;'metadata_location':<br>
+&nbsp;&nbsp;'s3://bucket/metadata/<br>
+&nbsp;&nbsp;v1.metadata.json'<br>
+}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box">
+                            <div class="arch-component-title">Object Storage</div>
+                            <div class="arch-component-desc">S3, HDFS, ADLS</div>
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box" style="border-color: var(--accent-green);">
+                            <div class="arch-component-title">Iceberg Metadata Files</div>
+                            <div class="arch-component-desc">Contains ALL snapshot history, schema evolution, partition specs</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-box-title">Key Insight</div>
+                    HMS only stores a <span class="highlight">pointer</span> to the current metadata location. It doesn't understand or track the rich snapshot history, branches, or ACID semantics inside Iceberg's metadata layer.
+                </div>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">The Disconnect Problem</h2>
+                
+                <div class="architecture-diagram">
+                    <div class="arch-component">
+                        <div class="arch-component-title">What HMS Knows</div>
+                        <div class="arch-component-desc">
+                            ✓ Table name<br>
+                            ✓ Current metadata pointer<br>
+                            ✓ Table properties<br>
+                            ✓ Basic schema (cached)
+                        </div>
+                    </div>
+                    
+                    <div class="arch-component" style="border-color: var(--accent-red); background: rgba(255, 51, 102, 0.05);">
+                        <div class="arch-component-title">What HMS Doesn't Know</div>
+                        <div class="arch-component-desc">
+                            ✗ Snapshot lineage<br>
+                            ✗ Branches & tags<br>
+                            ✗ Time travel history<br>
+                            ✗ Concurrent write semantics<br>
+                            ✗ Multi-table transactions<br>
+                            ✗ Isolation levels
+                        </div>
+                    </div>
+                    
+                    <div class="arch-component" style="border-color: var(--accent-green);">
+                        <div class="arch-component-title">What Iceberg Metadata Has</div>
+                        <div class="arch-component-desc">
+                            ✓ Complete snapshot graph<br>
+                            ✓ Optimistic concurrency<br>
+                            ✓ ACID guarantees<br>
+                            ✓ Schema evolution history<br>
+                            ✓ Partition evolution<br>
+                            ✓ Sort order changes
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="hms-architecture" class="tab-content">
+            <div class="diagram-section">
+                <h2 class="section-title">HMS + Iceberg Architecture</h2>
+                
+                <div class="code-block">
+// HMS Table Entry for Iceberg
+CREATE EXTERNAL TABLE my_table (...)
+STORED AS ICEBERG
+LOCATION 's3://bucket/warehouse/db/table'
+TBLPROPERTIES (
+  'table_type'='ICEBERG',
+  'metadata_location'='s3://bucket/.../metadata/v42.metadata.json'
+)
+                </div>
+
+                <div class="architecture-diagram" style="grid-template-columns: 1fr; max-width: 800px; margin: 2rem auto;">
+                    <div class="arch-component">
+                        <div class="arch-component-title">Components You Need</div>
+                        <div class="flow-diagram" style="flex-direction: column;">
+                            <div class="flow-box">
+                                <strong>HMS Database</strong><br>
+                                (MySQL/PostgreSQL)
+                            </div>
+                            <div class="flow-arrow">+</div>
+                            <div class="flow-box">
+                                <strong>HMS Service</strong><br>
+                                (Thrift server)
+                            </div>
+                            <div class="flow-arrow">+</div>
+                            <div class="flow-box">
+                                <strong>Apache Ranger</strong><br>
+                                (For governance)
+                            </div>
+                            <div class="flow-arrow">+</div>
+                            <div class="flow-box problem">
+                                <strong>Global Lock Mechanism</strong><br>
+                                (ZooKeeper or DB locks)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-box-title">Operational Overhead</div>
+                    HMS is not just one service - it's an entire ecosystem that requires:
+                    <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
+                        <li>Database maintenance (backups, scaling, HA)</li>
+                        <li>Ranger deployment and configuration</li>
+                        <li>Lock coordination service</li>
+                        <li>Network latency considerations</li>
+                        <li>Single-region deployment constraints</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">Write Operation Flow with HMS</h2>
+                
+                <div class="visual-flow">
+                    <div class="flow-layer">
+                        <div class="flow-box">
+                            <strong>Step 1: Acquire Lock</strong><br>
+                            Writer requests global lock from HMS
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓ (blocking)</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box problem">
+                            <strong>Step 2: Wait for Lock</strong><br>
+                            Other writers blocked until lock released
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box">
+                            <strong>Step 3: Read Metadata</strong><br>
+                            Fetch current metadata location from HMS
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box">
+                            <strong>Step 4: Write Data</strong><br>
+                            Write data files + create new metadata
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box">
+                            <strong>Step 5: Update HMS</strong><br>
+                            Update metadata_location pointer
+                        </div>
+                    </div>
+                    
+                    <div class="vertical-arrow">↓</div>
+                    
+                    <div class="flow-layer">
+                        <div class="flow-box">
+                            <strong>Step 6: Release Lock</strong><br>
+                            Finally allow other writers to proceed
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-box" style="border-color: var(--accent-red); background: rgba(255, 51, 102, 0.1);">
+                    <div class="info-box-title" style="color: var(--accent-red);">Problem: Pessimistic Locking</div>
+                    HMS uses pessimistic locking (acquire lock first), while Iceberg is designed for optimistic concurrency (try to commit, fail fast if conflict). This creates a mismatch.
+                </div>
+            </div>
+        </div>
+
+        <div id="drawbacks" class="tab-content">
+            <div class="diagram-section">
+                <h2 class="section-title">HMS Drawbacks with Iceberg</h2>
+                
+                <div class="drawbacks-grid">
+                    <div class="drawback-card">
+                        <div class="drawback-title">1. No Snapshot Isolation Understanding</div>
+                        <div class="drawback-desc">
+                            HMS treats each commit as a simple metadata pointer update. It doesn't understand:
+                            <ul style="margin-top: 0.5rem; margin-left: 1rem;">
+                                <li>Snapshot lineage and parent-child relationships</li>
+                                <li>Concurrent snapshot creation</li>
+                                <li>Snapshot expiration policies</li>
+                                <li>Time travel queries across snapshots</li>
+                            </ul>
+                            <div class="code-block" style="margin-top: 1rem;">
+-- This works but HMS has no idea
+SELECT * FROM table
+FOR SYSTEM_TIME AS OF
+  '2024-01-01 10:00:00'
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="drawback-card">
+                        <div class="drawback-title">2. No Multi-Table Transactions</div>
+                        <div class="drawback-desc">
+                            Each table commit is independent. You cannot atomically commit changes across multiple Iceberg tables.
+                            <div class="code-block" style="margin-top: 1rem;">
+-- NOT POSSIBLE with HMS
+BEGIN TRANSACTION;
+  UPDATE table_a SET ...;
+  UPDATE table_b SET ...;
+COMMIT; -- ✗ No atomic commit
+                            </div>
+                            This is critical for maintaining consistency across related tables (fact + dimension tables, for example).
+                        </div>
+                    </div>
+
+                    <div class="drawback-card">
+                        <div class="drawback-title">3. Global Lock Contention</div>
+                        <div class="drawback-desc">
+                            HMS uses pessimistic locking for table updates. All concurrent writers queue up waiting for the lock.
+                            <br><br>
+                            <strong>Impact:</strong> Poor write scalability. Instead of Iceberg's optimistic concurrency (try fast, fail fast), you get slow serialized writes.
+                            <br><br>
+                            <strong>Iceberg's model:</strong> Multiple writers can work in parallel and only conflict if they modify overlapping data.
+                        </div>
+                    </div>
+
+                    <div class="drawback-card">
+                        <div class="drawback-title">4. Requires External Governance (Ranger)</div>
+                        <div class="drawback-desc">
+                            HMS has no built-in fine-grained access control. You need Apache Ranger for:
+                            <ul style="margin-top: 0.5rem; margin-left: 1rem;">
+                                <li>Row-level security</li>
+                                <li>Column masking</li>
+                                <li>Audit logging</li>
+                                <li>Policy management</li>
+                            </ul>
+                            <strong>Extra infrastructure:</strong> Another service to deploy, monitor, and maintain.
+                        </div>
+                    </div>
+
+                    <div class="drawback-card">
+                        <div class="drawback-title">5. Single Region / Latency Issues</div>
+                        <div class="drawback-desc">
+                            HMS is typically deployed in a single region. For multi-region workloads:
+                            <ul style="margin-top: 0.5rem; margin-left: 1rem;">
+                                <li>Every metadata operation crosses regions</li>
+                                <li>Added 50-200ms+ per operation</li>
+                                <li>No local caching benefit</li>
+                                <li>DR/HA becomes complex</li>
+                            </ul>
+                            Modern catalogs support multi-region deployments natively.
+                        </div>
+                    </div>
+
+                    <div class="drawback-card">
+                        <div class="drawback-title">6. No Branch/Tag Support</div>
+                        <div class="drawback-desc">
+                            Iceberg supports branches and tags for:
+                            <ul style="margin-top: 0.5rem; margin-left: 1rem;">
+                                <li>Feature branch development</li>
+                                <li>Data quality testing</li>
+                                <li>Rollback points</li>
+                                <li>Experimentation</li>
+                            </ul>
+                            HMS has no concept of these - it only tracks the "main" branch pointer.
+                        </div>
+                    </div>
+
+                    <div class="drawback-card">
+                        <div class="drawback-title">7. Operational Complexity</div>
+                        <div class="drawback-desc">
+                            Running HMS means maintaining:
+                            <ul style="margin-top: 0.5rem; margin-left: 1rem;">
+                                <li><strong>RDBMS:</strong> MySQL/PostgreSQL cluster</li>
+                                <li><strong>HMS Service:</strong> Java process, memory tuning</li>
+                                <li><strong>Ranger:</strong> Policy server, audit db</li>
+                                <li><strong>ZooKeeper:</strong> For locks (optional but common)</li>
+                                <li><strong>Monitoring:</strong> All of the above</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="drawback-card">
+                        <div class="drawback-title">8. Schema Caching Issues</div>
+                        <div class="drawback-desc">
+                            HMS caches schema information, but Iceberg schemas can evolve rapidly. This leads to:
+                            <ul style="margin-top: 0.5rem; margin-left: 1rem;">
+                                <li>Stale schema reads</li>
+                                <li>Cache invalidation complexity</li>
+                                <li>Inconsistency between HMS and Iceberg metadata</li>
+                            </ul>
+                            Modern catalogs treat Iceberg metadata as source of truth.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">Visual Summary: The Mismatch</h2>
+                
+                <div class="architecture-diagram">
+                    <div class="arch-component" style="border-color: var(--accent-red); background: rgba(255, 51, 102, 0.05);">
+                        <div class="arch-component-title">HMS Design Philosophy</div>
+                        <div class="arch-component-desc">
+                            • Built for Hive tables (2000s)<br>
+                            • Centralized metadata database<br>
+                            • Pessimistic locking<br>
+                            • Schema-centric<br>
+                            • Single table operations<br>
+                            • No versioning concept<br>
+                            • External governance required
+                        </div>
+                    </div>
+                    
+                    <div class="arch-component" style="border-color: var(--accent-green);">
+                        <div class="arch-component-title">Iceberg Design Philosophy</div>
+                        <div class="arch-component-desc">
+                            • Built for cloud object stores (2017+)<br>
+                            • Distributed metadata files<br>
+                            • Optimistic concurrency<br>
+                            • Snapshot-centric<br>
+                            • Multi-table transactions<br>
+                            • Git-like versioning<br>
+                            • Catalog-level governance
+                        </div>
+                    </div>
+                    
+                    <div class="arch-component" style="border-color: var(--accent-orange);">
+                        <div class="arch-component-title">The Result</div>
+                        <div class="arch-component-desc">
+                            HMS acts as a "dumb pointer registry" that doesn't leverage Iceberg's advanced features. You get basic functionality but miss out on the innovations that make Iceberg powerful.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="comparison" class="tab-content">
+            <div class="diagram-section">
+                <h2 class="section-title">Modern Catalogs vs HMS</h2>
+                
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>HMS</th>
+                            <th>Nessie</th>
+                            <th>Polaris</th>
+                            <th>Gravitino</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Snapshot Awareness</strong></td>
+                            <td class="cross">✗ Pointer only</td>
+                            <td class="check">✓ Full lineage</td>
+                            <td class="check">✓ Native support</td>
+                            <td class="check">✓ Understands</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Branch & Tags</strong></td>
+                            <td class="cross">✗ No support</td>
+                            <td class="check">✓✓ Git-like</td>
+                            <td class="check">✓ Supported</td>
+                            <td class="check">✓ Basic support</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Multi-Table Transactions</strong></td>
+                            <td class="cross">✗ Not possible</td>
+                            <td class="check">✓✓ Native</td>
+                            <td class="cross">✗ Not yet</td>
+                            <td class="cross">✗ Not yet</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Concurrency Model</strong></td>
+                            <td class="cross">Pessimistic locks</td>
+                            <td class="check">Optimistic + merge</td>
+                            <td class="check">Optimistic</td>
+                            <td class="check">Optimistic</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Built-in Governance</strong></td>
+                            <td class="cross">Needs Ranger</td>
+                            <td class="check">✓ Role-based</td>
+                            <td class="check">✓✓ Principal-based</td>
+                            <td class="check">✓ Unified</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Multi-Region</strong></td>
+                            <td class="cross">Single region</td>
+                            <td class="check">✓ Distributed</td>
+                            <td class="check">✓ Cloud-native</td>
+                            <td class="check">✓ Supported</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Catalog-level Time Travel</strong></td>
+                            <td class="cross">✗</td>
+                            <td class="check">✓✓ Yes</td>
+                            <td class="cross">✗</td>
+                            <td class="cross">✗</td>
+                        </tr>
+                        <tr>
+                            <td><strong>API Style</strong></td>
+                            <td>Thrift (legacy)</td>
+                            <td>REST + Git semantics</td>
+                            <td class="check">REST standard</td>
+                            <td class="check">REST standard</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Operational Complexity</strong></td>
+                            <td class="cross">High (HMS+DB+Ranger)</td>
+                            <td>Medium</td>
+                            <td class="check">Low (managed)</td>
+                            <td>Medium</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Ecosystem Maturity</strong></td>
+                            <td class="check">✓✓ Very mature</td>
+                            <td class="check">✓ Growing fast</td>
+                            <td>New (2024)</td>
+                            <td>Newer (2023)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">Nessie: Git for Data</h2>
+                
+                <div class="info-box">
+                    <div class="info-box-title">Why Nessie is Special</div>
+                    Nessie treats your entire data lake like a Git repository. You can:
+                </div>
+
+                <div class="architecture-diagram">
+                    <div class="arch-component" style="border-color: var(--accent-green);">
+                        <div class="arch-component-title">Branch Isolation</div>
+                        <div class="arch-component-desc">
+                            Create branches for testing, experimentation, or development without affecting production:
+                            <div class="code-block" style="margin-top: 0.5rem;">
+-- Create dev branch
+CREATE BRANCH dev
+FROM main
+
+-- Work on dev
+USE BRANCH dev
+UPDATE table SET ...
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="arch-component" style="border-color: var(--accent-green);">
+                        <div class="arch-component-title">Atomic Multi-Table Commits</div>
+                        <div class="arch-component-desc">
+                            Commit changes across multiple tables atomically:
+                            <div class="code-block" style="margin-top: 0.5rem;">
+-- Both succeed or both fail
+INSERT INTO facts ...
+INSERT INTO dimensions ...
+COMMIT
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="arch-component" style="border-color: var(--accent-green);">
+                        <div class="arch-component-title">Catalog Time Travel</div>
+                        <div class="arch-component-desc">
+                            Query the entire catalog as it existed at any point:
+                            <div class="code-block" style="margin-top: 0.5rem;">
+-- See all tables at timestamp
+SELECT * FROM catalog
+AT TIMESTAMP
+  '2024-01-01'
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="diagram-section">
+                <h2 class="section-title">When to Use What</h2>
+                
+                <div class="drawbacks-grid">
+                    <div class="drawback-card" style="border-color: var(--accent-orange); background: rgba(255, 107, 53, 0.05);">
+                        <div class="drawback-title">Stick with HMS If...</div>
+                        <div class="drawback-desc">
+                            ✓ You already have HMS infrastructure<br>
+                            ✓ You only need basic Iceberg functionality<br>
+                            ✓ Single region deployment<br>
+                            ✓ Low write concurrency<br>
+                            ✓ No need for branches/tags<br>
+                            ✓ Tight integration with legacy Hive workloads
+                        </div>
+                    </div>
+
+                    <div class="drawback-card" style="border-color: var(--accent-green); background: rgba(0, 255, 136, 0.05);">
+                        <div class="drawback-title">Switch to Modern Catalogs If...</div>
+                        <div class="drawback-desc">
+                            ✓ High concurrent write workloads<br>
+                            ✓ Need branches/tags for testing<br>
+                            ✓ Multi-region deployment<br>
+                            ✓ Want multi-table transactions<br>
+                            ✓ Need catalog-level governance<br>
+                            ✓ Building new lakehouse from scratch
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-box-title">Migration Path</div>
+                    Good news: You don't have to migrate all at once. Modern catalogs can coexist with HMS:
+                    <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
+                        <li>Start with new tables in modern catalog</li>
+                        <li>Keep existing tables in HMS</li>
+                        <li>Gradually migrate high-value tables</li>
+                        <li>Many engines support multiple catalogs simultaneously</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: var(--accent-green);"></div>
+                <span>Advantage / Supported</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: var(--accent-red);"></div>
+                <span>Limitation / Not Supported</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: var(--accent-blue);"></div>
+                <span>Key Concept</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: var(--accent-orange);"></div>
+                <span>Decision Point</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabId) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabId).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
