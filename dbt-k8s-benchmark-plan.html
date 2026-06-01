@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dbt on Kubernetes — Performance Benchmark Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;800;900&family=Spline+Sans+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e0f;
+    --panel:#10171a;
+    --panel-2:#0d1316;
+    --ink:#e4ebe7;
+    --muted:#7d8d87;
+    --line:#1d2a2c;
+    --acc:#37e0a8;       /* mint */
+    --acc-2:#f4b942;     /* amber */
+    --acc-3:#5fb0ff;     /* sky */
+    --acc-4:#ff6b6b;     /* coral */
+    --grad:linear-gradient(135deg,#37e0a8,#5fb0ff);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Archivo',sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    background-image:
+      radial-gradient(circle at 12% -10%,rgba(55,224,168,.10),transparent 40%),
+      radial-gradient(circle at 90% 0%,rgba(95,176,255,.08),transparent 45%);
+  }
+  .mono{font-family:'Spline Sans Mono',monospace}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+
+  /* ---------- HERO ---------- */
+  header.hero{
+    padding:90px 0 64px;
+    border-bottom:1px solid var(--line);
+    position:relative;
+    overflow:hidden;
+  }
+  .hero:before{
+    content:"";position:absolute;inset:0;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),
+                     linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:46px 46px;
+    opacity:.25;mask-image:radial-gradient(circle at 70% 30%,black,transparent 75%);
+  }
+  .badge{
+    display:inline-flex;align-items:center;gap:8px;
+    font-family:'Spline Sans Mono',monospace;font-size:12px;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--acc);
+    border:1px solid var(--line);border-radius:100px;
+    padding:7px 14px;background:var(--panel);position:relative;z-index:2;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--acc);box-shadow:0 0 10px var(--acc)}
+  h1{
+    font-size:clamp(38px,6.5vw,76px);font-weight:900;line-height:1.02;
+    letter-spacing:-.02em;margin:24px 0 18px;position:relative;z-index:2;
+  }
+  h1 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lede{max-width:660px;color:var(--muted);font-size:18px;position:relative;z-index:2}
+  .meta-row{display:flex;flex-wrap:wrap;gap:14px;margin-top:34px;position:relative;z-index:2}
+  .chip{
+    font-family:'Spline Sans Mono',monospace;font-size:12.5px;color:var(--ink);
+    background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 13px;
+  }
+  .chip b{color:var(--acc-2);font-weight:600}
+
+  /* ---------- SECTION SHELL ---------- */
+  section{padding:62px 0;border-bottom:1px solid var(--line)}
+  .sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:34px}
+  .sec-num{font-family:'Spline Sans Mono',monospace;color:var(--acc);font-size:14px;font-weight:600;letter-spacing:.1em}
+  h2{font-size:clamp(24px,3.4vw,34px);font-weight:800;letter-spacing:-.01em}
+  .sec-sub{color:var(--muted);max-width:720px;margin-top:8px;font-size:15.5px}
+
+  /* ---------- OVERVIEW CARDS ---------- */
+  .grid{display:grid;gap:18px}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .card{
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;
+    transition:transform .25s ease,border-color .25s ease;
+  }
+  .card:hover{transform:translateY(-4px);border-color:var(--acc)}
+  .card h3{font-size:16px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+  .card p{color:var(--muted);font-size:14px}
+  .ico{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-family:'Spline Sans Mono',monospace;font-weight:700;font-size:14px;flex:none}
+  .i1{background:rgba(55,224,168,.13);color:var(--acc)}
+  .i2{background:rgba(244,185,66,.13);color:var(--acc-2)}
+  .i3{background:rgba(95,176,255,.13);color:var(--acc-3)}
+  .i4{background:rgba(255,107,107,.13);color:var(--acc-4)}
+
+  /* ---------- PHASE / TASK ---------- */
+  .phase{
+    background:var(--panel-2);border:1px solid var(--line);border-radius:16px;
+    margin-bottom:22px;overflow:hidden;
+  }
+  .phase-bar{
+    display:flex;align-items:center;gap:16px;padding:20px 24px;cursor:pointer;
+    background:linear-gradient(90deg,rgba(55,224,168,.05),transparent);
+    border-left:3px solid var(--acc);
+  }
+  .phase:nth-child(odd) .phase-bar{border-left-color:var(--acc-3)}
+  .phase-id{
+    font-family:'Spline Sans Mono',monospace;font-weight:700;font-size:13px;
+    color:var(--bg);background:var(--acc);border-radius:7px;padding:5px 10px;flex:none;
+  }
+  .phase:nth-child(odd) .phase-id{background:var(--acc-3)}
+  .phase-title{font-size:18px;font-weight:700;flex:1}
+  .phase-tag{font-family:'Spline Sans Mono',monospace;font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  .toggle{font-family:'Spline Sans Mono',monospace;color:var(--muted);font-size:20px;transition:transform .3s ease;flex:none}
+  .phase.open .toggle{transform:rotate(45deg);color:var(--acc)}
+  .phase-body{max-height:0;overflow:hidden;transition:max-height .45s ease}
+  .phase.open .phase-body{max-height:6000px}
+  .phase-inner{padding:6px 24px 26px}
+
+  .task{border-top:1px dashed var(--line);padding:20px 0}
+  .task:first-child{border-top:none}
+  .task-h{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+  .task-id{font-family:'Spline Sans Mono',monospace;font-size:12px;color:var(--acc-2);font-weight:600}
+  .task-name{font-weight:600;font-size:16px}
+  ol.steps{list-style:none;counter-reset:s;display:grid;gap:9px;margin-left:2px}
+  ol.steps li{
+    counter-increment:s;position:relative;padding-left:34px;color:var(--muted);font-size:14.5px;
+  }
+  ol.steps li:before{
+    content:counter(s);position:absolute;left:0;top:1px;
+    font-family:'Spline Sans Mono',monospace;font-size:11px;font-weight:700;color:var(--acc);
+    width:22px;height:22px;border:1px solid var(--line);border-radius:6px;display:grid;place-items:center;background:var(--panel);
+  }
+  ol.steps li b{color:var(--ink);font-weight:600}
+  .codeblock{
+    font-family:'Spline Sans Mono',monospace;font-size:12.5px;color:#bfe9d8;
+    background:#070b0c;border:1px solid var(--line);border-radius:10px;
+    padding:14px 16px;margin:12px 0 4px;overflow-x:auto;white-space:pre;line-height:1.55;
+  }
+  .codeblock .cm{color:var(--muted)}
+  .codeblock .kw{color:var(--acc-2)}
+  .codeblock .fn{color:var(--acc-3)}
+
+  /* ---------- METRICS TABLE ---------- */
+  table{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
+  th,td{text-align:left;padding:13px 14px;border-bottom:1px solid var(--line)}
+  th{font-family:'Spline Sans Mono',monospace;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--acc);font-weight:600}
+  td:first-child{color:var(--ink);font-weight:600;width:30%}
+  td{color:var(--muted)}
+  tr:hover td{background:rgba(55,224,168,.03)}
+  .pill{font-family:'Spline Sans Mono',monospace;font-size:11px;padding:3px 9px;border-radius:6px;font-weight:600}
+  .p-lat{background:rgba(95,176,255,.14);color:var(--acc-3)}
+  .p-res{background:rgba(244,185,66,.14);color:var(--acc-2)}
+  .p-thr{background:rgba(55,224,168,.14);color:var(--acc)}
+  .p-rel{background:rgba(255,107,107,.14);color:var(--acc-4)}
+
+  /* ---------- CHECKLIST ---------- */
+  .check{display:grid;gap:11px}
+  .check label{display:flex;gap:13px;align-items:flex-start;cursor:pointer;color:var(--muted);font-size:14.5px;padding:11px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);transition:.2s}
+  .check label:hover{border-color:var(--acc)}
+  .check input{appearance:none;width:19px;height:19px;border:1.5px solid var(--muted);border-radius:5px;flex:none;margin-top:2px;cursor:pointer;transition:.2s;position:relative}
+  .check input:checked{background:var(--acc);border-color:var(--acc)}
+  .check input:checked:after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:var(--bg);font-size:13px;font-weight:900}
+  .check input:checked + span{color:var(--muted);text-decoration:line-through;opacity:.6}
+
+  /* ---------- TIMELINE ---------- */
+  .tl{position:relative;padding-left:30px}
+  .tl:before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:var(--line)}
+  .tl-item{position:relative;margin-bottom:22px}
+  .tl-item:before{content:"";position:absolute;left:-30px;top:5px;width:16px;height:16px;border-radius:50%;background:var(--bg);border:3px solid var(--acc)}
+  .tl-week{font-family:'Spline Sans Mono',monospace;font-size:12px;color:var(--acc-2);font-weight:600}
+  .tl-item h4{font-size:15.5px;margin:3px 0 4px}
+  .tl-item p{color:var(--muted);font-size:14px}
+
+  footer{padding:48px 0 70px;text-align:center;color:var(--muted);font-size:13px}
+  footer .mono{color:var(--acc)}
+  a.controls{display:inline-block;margin-top:14px;font-family:'Spline Sans Mono',monospace;font-size:12px;color:var(--acc-3);cursor:pointer;border:1px solid var(--line);padding:8px 16px;border-radius:8px;text-decoration:none}
+  a.controls:hover{border-color:var(--acc-3)}
+
+  @media(max-width:780px){.g3,.g2{grid-template-columns:1fr}.wrap{padding:0 18px}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="badge"><span class="dot"></span>Performance Engineering Runbook</span>
+    <h1>Benchmarking <em>dbt on Kubernetes</em> at production scale</h1>
+    <p class="lede">A structured, end-to-end plan to measure, profile, and optimise dbt transformation workloads running on Kubernetes — from harness design and workload generation through to load injection, observability, and regression gating.</p>
+    <div class="meta-row">
+      <div class="chip"><b>8</b> phases</div>
+      <div class="chip"><b>24</b> tasks</div>
+      <div class="chip">Stack: <b>dbt-core + KubernetesPodOperator / dbt-k8s</b></div>
+      <div class="chip">Warehouse: <b>Spark / Trino / Snowflake</b></div>
+    </div>
+  </div>
+</header>
+
+<!-- OVERVIEW -->
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">00</span><div><h2>What we are measuring &amp; why</h2><p class="sec-sub">Benchmarking dbt on K8s means isolating three distinct layers — the orchestration/pod layer, the dbt process layer, and the warehouse/query engine layer — because a slow run can originate in any of them.</p></div></div>
+    <div class="grid g3">
+      <div class="card"><h3><span class="ico i1">K8</span>Orchestration layer</h3><p>Pod scheduling latency, image pull time, init-container overhead, CPU/memory throttling, node autoscaling lag, and concurrency limits across the dbt pods.</p></div>
+      <div class="card"><h3><span class="ico i2">db</span>dbt process layer</h3><p>Parse/compile time, manifest generation, thread concurrency, node selection (state:modified), adapter connection pooling, and run-results timing per model.</p></div>
+      <div class="card"><h3><span class="ico i3">SQL</span>Warehouse layer</h3><p>Query execution time, materialization strategy (table vs incremental vs view), shuffle/scan volumes, partition pruning, and concurrent-query contention.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- PHASES -->
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">01</span><div><h2>The benchmark plan — phases &amp; tasks</h2><p class="sec-sub">Click any phase to expand its tasks and step-by-step work. Designed to be executed sequentially; phases 4–6 form the core measurement loop.</p></div></div>
+
+    <!-- PHASE 1 -->
+    <div class="phase open">
+      <div class="phase-bar"><span class="phase-id">P1</span><span class="phase-title">Define objectives, scope &amp; success criteria</span><span class="phase-tag">Planning</span><span class="toggle">+</span></div>
+      <div class="phase-body"><div class="phase-inner">
+
+        <div class="task">
+          <div class="task-h"><span class="task-id">T1.1</span><span class="task-name">Establish benchmark goals &amp; SLOs</span></div>
+          <ol class="steps">
+            <li>Interview stakeholders to capture the <b>business question</b> — e.g. "can the nightly run finish in &lt; 90 min at 3× data volume?"</li>
+            <li>Translate into <b>quantifiable SLOs</b>: total run wall-clock, p95 per-model time, pod startup latency, cost per run.</li>
+            <li>Classify each metric as <b>latency, throughput, resource, or reliability</b> so dashboards group correctly.</li>
+            <li>Document explicit <b>pass/fail thresholds</b> that will later drive the regression gate (Phase 8).</li>
+          </ol>
+        </div>
+
+        <div class="task">
+          <div class="task-h"><span class="task-id">T1.2</span><span class="task-name">Fix the scope &amp; variables under test</span></div>
+          <ol class="steps">
+            <li>List the <b>independent variables</b> you will sweep: dbt thread count, pod CPU/mem requests, warehouse size, data volume, concurrency.</li>
+            <li>Pin everything else as <b>controlled constants</b> (dbt version, adapter version, image digest, K8s version) and record them.</li>
+            <li>Decide the <b>execution model</b> under test: single dbt pod multi-threaded, vs many pods via KubernetesPodOperator / dbt task fan-out.</li>
+            <li>Write a one-page <b>test charter</b> — anyone re-running it must produce comparable numbers.</li>
+          </ol>
+        </div>
+
+      </div></div>
+    </div>
+
+    <!-- PHASE 2 -->
+    <div class="phase">
+      <div class="phase-bar"><span class="phase-id">P2</span><span class="phase-title">Build the benchmark harness &amp; environment</span><span class="phase-tag">Setup</span><span class="toggle">+</span></div>
+      <div class="phase-body"><div class="phase-inner">
+
+        <div class="task">
+          <div class="task-h"><span class="task-id">T2.1</span><span class="task-name">Provision an isolated, reproducible cluster</span></div>
+          <ol class="steps">
+            <li>Stand up a <b>dedicated namespace</b> (or cluster) so neighbour workloads don't pollute measurements.</li>
+            <li>Pin a <b>fixed node pool</b> with known instance types; disable bursting/credits where possible to avoid noisy CPU.</li>
+            <li>Apply <b>ResourceQuota + LimitRange</b> so pod sizing is deterministic across runs.</li>
+            <li>Capture the full <b>infra spec as code</b> (Terraform/Helm values) and commit it alongside results.</li>
+          </ol>
+          <div class="codeblock"><span class="cm"># pin node pool + quota for the bench namespace</span>
+<span class="kw">apiVersion:</span> v1
+<span class="kw">kind:</span> ResourceQuota
+<span class="kw">metadata:</span> {<span class="kw">name:</span> dbt-bench-quota, <span class="kw">namespace:</span> dbt-bench}
+<span class="kw">spec:</span>
+  <span class="kw">hard:</span> {requests.cpu: "32", requests.memory: 128Gi, pods: "60"}</div>
+        </div>
+
+        <div class="task">
+          <div class="task-h"><span class="task-id">T2.2</span><span class="task-name">Build a versioned, slim dbt runner image</span></div>
+          <ol class="steps">
+            <li>Build a multi-stage image with <b>pinned dbt-core + adapter</b> versions; record the immutable <b>image digest</b>, not the tag.</li>
+            <li>Pre-bake the <b>dbt deps</b> (packages.yml) into the image to remove network variance at runtime.</li>
+            <li>Push to a registry colocated with the cluster to <b>minimise image-pull time</b>; pre-pull onto nodes if needed.</li>
+            <li>Verify cold-start vs warm-start pull times and note both.</li>
+          </ol>
+        </div>
+
+        <div class="task">
+          <div class="task-h"><span class="task-id">T2.3</span><span class="task-name">Wire the orchestration entrypoint</span></div>
+          <ol class="steps">
+            <li>Define how dbt is invoked: a single <b>Job/Pod</b>, or fan-out via <b>KubernetesPodOperator</b> (Airflow) / Argo Workflows.</li>
+            <li>Externalise <b>profiles.yml</b> via Secret/ConfigMap so warehouse creds and thread counts are injectable per run.</li>
+            <li>Ensure the runner emits <b>structured logs + run_results.json + manifest.json</b> to a persistent volume or object store.</li>
+            <li>Add a <b>run-id label</b> to every pod for later correlation in metrics and logs.</li>
+          </ol>
+        </div>
+
+      </div></div>
+    </div>
+
+    <!-- PHASE 3 -->
+    <div class="phase">
+      <div class="phase-bar"><span class="phase-id">P3</span><span class="phase-title">Generate representative workloads &amp; datasets</span><span class="phase-tag">Data</span><span class="toggle">+</span></div>
+      <div class="phase-body"><div class="phase-inner">
+
+        <div class="task">
+          <div class="task-h"><span class="task-id">T3.1</span><span class="task-name">Select / synthesise the dataset</span></div>
+          <ol class="steps">
+            <li>Choose a standard scalable schema (<b>TPC-DS / TPC-H</b>) or a sanitised clone of your production models.</li>
+            <li>Generate <b>multiple scale factors</b> (e.g. SF=10, 100, 1000) so you can plot scaling curves, not a single point.</li>
+            <li>Match real-world <b>skew and cardinality</b> — uniform synthetic data hides partition-pruning and join-skew problems.</li>
+            <li>Stage data into the warehouse <b>once</b> and snapshot it so every run starts from identical state.</li>
+          </ol>
+        </div>
+
+        <div class="task">
+          <div class="task-h"><span class="task-id">T3.2</span><span class="task-name">Curate a graduated dbt project</span></div>
+          <ol class="steps">
+            <li>Build model tiers: <b>views, full tables, and incremental</b> models to exercise each materialization path.</li>
+            <li>Include <b>fan-out and fan-in</b> DAG shapes so dbt's thread scheduler is genuinely stressed.</li>
+            <li>Add a realistic mix of <b>tests, snapshots, and seeds</b> to reflect a true production run profile.</li>
+            <li>Tag models so you can run <b>targeted subsets</b> (<span class="mono">dbt run --select tag:bench_core</span>).</li>
+          </ol>
+        </div>
+
+      </div></div>
+    </div>
+
+    <!-- PHASE 4 -->
+    <div class="phase">
+      <div class="phase-bar"><span class="phase-id">P4</span><span class="phase-title">Instrument metrics &amp; observability</span><span class="phase-tag">Telemetry</span><span class="toggle">+</span></div>
+      <div class="phase-body"><div class="phase-inner">
+
+        <div class="task">
+          <div class="task-h"><span class="task-id">T4.1</span><span class="task-name">Stand up the metrics stack</span></div>
+          <ol class="steps">
+            <li>Deploy <b>Prometheus + node-exporter + kube-state-metrics</b> to capture pod CPU/mem, throttling, and scheduling latency.</li>
+            <li>Add <b>cAdvisor</b> container metrics so you can see per-pod resource saturation during a run.</li>
+            <li>Stand up <b>Grafana</b> with a dashboard keyed on the run-id label from T2.3.</li>
+            <li>Ship dbt logs to <b>Loki / Elasticsearch</b> for searchable per-model timing.</li>
+          </ol>
+        </div>
+
+        <div class="task">
+          <div class="task-h"><span class="task-id">T4.2</span><span class="task-name">Capture dbt-native timing artifacts</span></div>
+          <ol class="steps">
+            <li>Parse <b>run_results.json</b> after every run to extract per-node <span class="mono">execution_time</span>, status, and thread id.</li>
+            <li>Diff <b>manifest.json</b> compile time vs total run time to separate parse overhead from execution.</li>
+            <li>Push parsed timings into a <b>results table</b> (or DuckDB) for trend analysis across runs.</li>
+            <li>Correlate the slowest dbt models with <b>warehouse query history</b> (query_id ↔ model).</li>
+          </ol>
+        </div>
+
+        <div class="task">
+          <div class="task-h"><span class="task-id">T4.3</span><span class="task-name">Instrument the warehouse / query engine</span></div>
+          <ol class="steps">
+            <li>Pull <b>query execution plans &amp; scan bytes</b> (Spark UI / Trino query stats / Snowflake QUERY_HISTORY).</li>
+            <li>Track <b>queue time vs execution time</b> separately — concurrency contention often hides here.</li>
+            <li>Record <b>warehouse cost units</b> (credits / DBUs / node-seconds) per run for cost-per-run analysis.</li>
+          </ol>
+        </div>
+
+      </div></div>
+    </div>
+
+    <!-- PHASE 5 -->
+    <div class="phase">
+      <div class="phase-bar"><span class="phase-id">P5</span><span class="phase-title">Design &amp; run benchmark scenarios</span><span class="phase-tag">Execution</span><span class="toggle">+</span></div>
+      <div class="phase-body"><div class="phase-inner">
+
+        <div class="task">
+          <div class="task-h"><span class="task-id">T5.1</span><span class="task-name">Establish the baseline</span></div>
+          <ol class="steps">
+            <li>Run a <b>warm-up pass</b> first and discard it (caches, JIT, connection pools settle).</li>
+            <li>Execute the <b>baseline configuration</b> N≥5 times to characterise variance, not just the mean.</li>
+            <li>Record <b>p50 / p95 / p99 + standard deviation</b> for each metric; a noisy baseline invalidates comparisons.</li>
+            <li>Freeze this baseline as the <b>reference point</b> all subsequent scenarios compare against.</li>
+          </ol>
+        </div>
+
+        <div class="task">
+          <div class="task-h"><span class="task-id">T5.2</span><span class="task-name">Sweep the configuration matrix</span></div>
+          <ol class="steps">
+            <li>Vary <b>one dimension at a time</b>: dbt threads (4→8→16→32), then pod CPU/mem, then warehouse size.</li>
+            <li>Find the <b>thread saturation point</b> — where adding threads stops improving wall-clock or starts throttling pods.</li>
+            <li>Test <b>fan-out execution</b> (many KubernetesPodOperator tasks) vs single multi-threaded pod for the same DAG.</li>
+            <li>Capture each cell of the matrix as a labelled run; <b>never change two variables at once</b>.</li>
+          </ol>
+        </div>
+
+        <div class="task">
+          <div class="task-h"><span class="task-id">T5.3</span><span class="task-name">Scale &amp; concurrency tests</span></div>
+          <ol class="steps">
+            <li>Re-run the project at each <b>data scale factor</b> (SF10/100/1000) to plot the scaling curve.</li>
+            <li>Run <b>multiple concurrent dbt invocations</b> to simulate competing teams hitting one warehouse.</li>
+            <li>Observe whether bottleneck shifts from <b>pod scheduling → dbt threads → warehouse contention</b> as load grows.</li>
+          </ol>
+        </div>
+
+      </div></div>
+    </div>
+
+    <!-- PHASE 6 -->
+    <div class="phase">
+      <div class="phase-bar"><span class="phase-id">P6</span><span class="phase-title">Load injection, stress &amp; resilience</span><span class="phase-tag">Load &amp; Chaos</span><span class="toggle">+</span></div>
+      <div class="phase-body"><div class="phase-inner">
+
+        <div class="task">
+          <div class="task-h"><span class="task-id">T6.1</span><span class="task-name">Drive load &amp; find the breaking point</span></div>
+          <ol class="steps">
+            <li>Ramp concurrent runs/queries until a <b>resource (CPU, mem, connections, warehouse slots)</b> saturates.</li>
+            <li>Use <b>k6 / Locust</b> against the query engine endpoint to layer synthetic query load beneath the dbt run.</li>
+            <li>Record the <b>knee of the curve</b> — the load level where p95 latency degrades non-linearly.</li>
+            <li>Confirm whether K8s <b>HPA / cluster-autoscaler</b> reacts in time or lags behind the spike.</li>
+          </ol>
+        </div>
+
+        <div class="task">
+          <div class="task-h"><span class="task-id">T6.2</span><span class="task-name">Resilience &amp; failure-mode tests</span></div>
+          <ol class="steps">
+            <li>Kill a dbt pod mid-run (chaos) and verify <b>retry / idempotency</b> of incremental models.</li>
+            <li>Throttle a node's CPU and confirm the run degrades <b>gracefully</b>, not catastrophically.</li>
+            <li>Test <b>OOMKill behaviour</b> — does a too-small mem request silently fail or surface a clear error?</li>
+            <li>Validate <b>state:modified</b> reruns only rebuild the affected sub-DAG after partial failure.</li>
+          </ol>
+        </div>
+
+      </div></div>
+    </div>
+
+    <!-- PHASE 7 -->
+    <div class="phase">
+      <div class="phase-bar"><span class="phase-id">P7</span><span class="phase-title">Analyse, profile &amp; optimise</span><span class="phase-tag">Analysis</span><span class="toggle">+</span></div>
+      <div class="phase-body"><div class="phase-inner">
+
+        <div class="task">
+          <div class="task-h"><span class="task-id">T7.1</span><span class="task-name">Identify the bottleneck layer</span></div>
+          <ol class="steps">
+            <li>Overlay pod CPU/mem timelines against the <b>dbt run_results timeline</b> to see where time is actually spent.</li>
+            <li>Decompose total run time into <b>pod-start + parse/compile + queue + execute</b> and find the largest slice.</li>
+            <li>Build a <b>critical-path analysis</b> of the DAG — the longest chain bounds your best-case wall-clock.</li>
+            <li>Flag the <b>top-10 slowest models</b> and tag each as warehouse-bound, thread-starved, or pod-bound.</li>
+          </ol>
+        </div>
+
+        <div class="task">
+          <div class="task-h"><span class="task-id">T7.2</span><span class="task-name">Apply &amp; re-measure optimisations</span></div>
+          <ol class="steps">
+            <li>Tune <b>dbt thread count</b> to the saturation point found in T5.2; right-size pod requests/limits.</li>
+            <li>Convert heavy full-refresh models to <b>incremental</b>; add partitioning / clustering keys in the warehouse.</li>
+            <li>Reduce pod cold-start via <b>image pre-pull</b> and pod warm-pools where the orchestrator supports it.</li>
+            <li>Re-run the baseline scenario and <b>quantify the delta</b> — every optimisation must be proven, not assumed.</li>
+          </ol>
+        </div>
+
+      </div></div>
+    </div>
+
+    <!-- PHASE 8 -->
+    <div class="phase">
+      <div class="phase-bar"><span class="phase-id">P8</span><span class="phase-title">Report, automate &amp; gate regressions</span><span class="phase-tag">Productionise</span><span class="toggle">+</span></div>
+      <div class="phase-body"><div class="phase-inner">
+
+        <div class="task">
+          <div class="task-h"><span class="task-id">T8.1</span><span class="task-name">Produce the benchmark report</span></div>
+          <ol class="steps">
+            <li>Publish results with <b>environment spec, methodology, charts, and percentiles</b> — reproducibility is the deliverable.</li>
+            <li>Show <b>scaling curves and the config matrix</b> so readers see trade-offs, not just one headline number.</li>
+            <li>State the <b>recommended production config</b> with its cost-per-run and SLO headroom.</li>
+          </ol>
+        </div>
+
+        <div class="task">
+          <div class="task-h"><span class="task-id">T8.2</span><span class="task-name">Automate as a repeatable CI benchmark</span></div>
+          <ol class="steps">
+            <li>Wrap the harness in a <b>scheduled CI job</b> (nightly / per-release) running the fixed baseline scenario.</li>
+            <li>Store results in a <b>time-series store</b> and chart trend over time to catch slow drift.</li>
+            <li>Add a <b>regression gate</b>: fail the pipeline if p95 run-time regresses beyond the T1.1 threshold.</li>
+            <li>Alert on <b>cost-per-run</b> increases as well as latency — both are regressions.</li>
+          </ol>
+        </div>
+
+      </div></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- METRICS TABLE -->
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">02</span><div><h2>Core metrics catalogue</h2><p class="sec-sub">The concrete signals to capture every run. Group them by class so dashboards and the regression gate stay coherent.</p></div></div>
+    <table>
+      <thead><tr><th>Metric</th><th>Class</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr><td>Total run wall-clock</td><td><span class="pill p-lat">latency</span></td><td>orchestrator / run_results.json</td></tr>
+        <tr><td>p95 per-model execution time</td><td><span class="pill p-lat">latency</span></td><td>run_results.json</td></tr>
+        <tr><td>Parse + compile time</td><td><span class="pill p-lat">latency</span></td><td>dbt manifest timing</td></tr>
+        <tr><td>Pod startup / image-pull latency</td><td><span class="pill p-lat">latency</span></td><td>kube-state-metrics / events</td></tr>
+        <tr><td>Models built per minute</td><td><span class="pill p-thr">throughput</span></td><td>derived from run_results</td></tr>
+        <tr><td>Concurrent query throughput</td><td><span class="pill p-thr">throughput</span></td><td>warehouse query history</td></tr>
+        <tr><td>Pod CPU / memory utilisation &amp; throttling</td><td><span class="pill p-res">resource</span></td><td>cAdvisor / Prometheus</td></tr>
+        <tr><td>Warehouse cost per run (credits/DBUs)</td><td><span class="pill p-res">resource</span></td><td>warehouse billing views</td></tr>
+        <tr><td>Node autoscaling reaction time</td><td><span class="pill p-res">resource</span></td><td>cluster-autoscaler logs</td></tr>
+        <tr><td>Run success rate / retry count</td><td><span class="pill p-rel">reliability</span></td><td>orchestrator status</td></tr>
+        <tr><td>OOMKill / eviction count</td><td><span class="pill p-rel">reliability</span></td><td>kube events</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- TOOLING -->
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">03</span><div><h2>Recommended toolchain</h2></div></div>
+    <div class="grid g2">
+      <div class="card"><h3><span class="ico i1">M</span>Measurement &amp; observability</h3><p>Prometheus + kube-state-metrics + cAdvisor for cluster signals; Grafana dashboards keyed on run-id; Loki/ELK for dbt logs; DuckDB or a results table for parsing run_results.json across runs.</p></div>
+      <div class="card"><h3><span class="ico i2">L</span>Load &amp; chaos injection</h3><p>k6 or Locust to layer synthetic query load on the warehouse endpoint; LitmusChaos / chaos-mesh for pod-kill, CPU-throttle, and OOM scenarios; concurrent dbt invocations to model multi-team contention.</p></div>
+      <div class="card"><h3><span class="ico i3">O</span>Orchestration under test</h3><p>Airflow KubernetesPodOperator or Argo Workflows for fan-out; a plain K8s Job for the single multi-threaded pod baseline. Externalise profiles.yml via Secret/ConfigMap for per-run tuning.</p></div>
+      <div class="card"><h3><span class="ico i4">D</span>Data &amp; workload generation</h3><p>TPC-DS / TPC-H generators at multiple scale factors, or a sanitised production clone with realistic skew. Snapshot the warehouse state so every run starts identical.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- TIMELINE -->
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">04</span><div><h2>Indicative execution timeline</h2><p class="sec-sub">A pragmatic ~5-week cadence for a first full benchmark cycle; compress for a focused single-config test.</p></div></div>
+    <div class="tl">
+      <div class="tl-item"><div class="tl-week">Week 1</div><h4>Phases 1–2 · Charter &amp; harness</h4><p>Lock objectives/SLOs, provision the isolated cluster, build the pinned runner image, wire the orchestration entrypoint.</p></div>
+      <div class="tl-item"><div class="tl-week">Week 2</div><h4>Phases 3–4 · Data &amp; telemetry</h4><p>Generate scaled datasets, curate the graduated dbt project, stand up Prometheus/Grafana and dbt artifact parsing.</p></div>
+      <div class="tl-item"><div class="tl-week">Week 3</div><h4>Phase 5 · Baseline &amp; matrix</h4><p>Establish a low-variance baseline, sweep threads / pod sizing / warehouse size, run scale &amp; concurrency tests.</p></div>
+      <div class="tl-item"><div class="tl-week">Week 4</div><h4>Phases 6–7 · Stress &amp; optimise</h4><p>Drive load to the breaking point, run resilience/chaos tests, profile bottlenecks, apply and re-measure optimisations.</p></div>
+      <div class="tl-item"><div class="tl-week">Week 5</div><h4>Phase 8 · Report &amp; automate</h4><p>Publish the reproducible report, wrap the harness as a scheduled CI benchmark with a percentile + cost regression gate.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CHECKLIST -->
+<section>
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">05</span><div><h2>Pre-flight checklist</h2><p class="sec-sub">Tick these before trusting any number. Click to mark complete.</p></div></div>
+    <div class="check">
+      <label><input type="checkbox"><span>Dedicated namespace / node pool isolated from neighbour workloads</span></label>
+      <label><input type="checkbox"><span>dbt-core + adapter versions pinned; image referenced by digest, not tag</span></label>
+      <label><input type="checkbox"><span>dbt deps pre-baked into the image to remove runtime network variance</span></label>
+      <label><input type="checkbox"><span>ResourceQuota / LimitRange applied for deterministic pod sizing</span></label>
+      <label><input type="checkbox"><span>Warm-up run executed and discarded before measured runs</span></label>
+      <label><input type="checkbox"><span>Baseline run repeated N≥5 times with p50/p95/p99 + stdev recorded</span></label>
+      <label><input type="checkbox"><span>Only one independent variable changed per scenario</span></label>
+      <label><input type="checkbox"><span>run_results.json + manifest.json captured and parsed every run</span></label>
+      <label><input type="checkbox"><span>Warehouse state snapshotted so every run starts identical</span></label>
+      <label><input type="checkbox"><span>Full environment spec committed as code alongside results</span></label>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p class="mono">dbt × Kubernetes // performance benchmark runbook</p>
+    <p style="margin-top:6px">8 phases · 24 tasks · measure → profile → optimise → gate</p>
+    <a class="controls" id="expandAll">⊕ expand all phases</a>
+  </div>
+</footer>
+
+<script>
+  document.querySelectorAll('.phase-bar').forEach(function(bar){
+    bar.addEventListener('click', function(){ bar.parentElement.classList.toggle('open'); });
+  });
+  var allOpen=false;
+  document.getElementById('expandAll').addEventListener('click', function(e){
+    e.preventDefault(); allOpen=!allOpen;
+    document.querySelectorAll('.phase').forEach(function(p){ p.classList.toggle('open', allOpen); });
+    this.textContent = allOpen ? '⊖ collapse all phases' : '⊕ expand all phases';
+  });
+</script>
+</body>
+</html>
