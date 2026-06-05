@@ -29,3 +29,7 @@ export function cacheDelete(key: string): void {
 export function cacheSize(): number {
   return store.size;
 }
+
+export function cacheClear(): void {
+  store.clear();
+}
