@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Nessie 0.107 — Operations Reference (Spark native · Starburst REST)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1b2733;
+    --ink-soft:#41526a;
+    --muted:#6b7888;
+    --line:#d6dfea;
+    --line-soft:#e8eef6;
+    --bg:#f4f8fc;
+    --surface:#ffffff;
+    --tint:#eaf2fb;
+    --tint-deep:#dfeafa;
+    --blue:#2f6fb3;
+    --blue-strong:#1f568f;
+    --blue-bright:#4f8fd6;
+    --blue-pale:#e3eefb;
+    --steel:#4a6075;
+    --steel-pale:#e7edf3;
+    --slate-pale:#eef1f5;
+    --shadow:0 1px 2px rgba(27,39,51,.04), 0 12px 30px -18px rgba(31,86,143,.28);
+    --shadow-soft:0 1px 2px rgba(27,39,51,.03), 0 8px 22px -16px rgba(31,86,143,.20);
+    --radius:14px;
+    --maxw:1080px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, #e9f2fc 0%, rgba(233,242,252,0) 60%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:16px;
+    line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4{font-family:'Space Grotesk','Inter',sans-serif;letter-spacing:-.012em;line-height:1.18;color:var(--ink);}
+  code,kbd,.mono{font-family:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;}
+  a{color:var(--blue-strong);text-decoration:none;}
+  a:hover{text-decoration:underline;}
+
+  /* ---------- layout shell ---------- */
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px;}
+  .layout{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:220px minmax(0,1fr);gap:38px;padding:0 24px;}
+  @media (max-width:920px){ .layout{grid-template-columns:1fr;padding:0 18px;gap:0;} }
+
+  /* ---------- sidebar nav ---------- */
+  .sidenav{position:sticky;top:0;align-self:start;height:100vh;padding:34px 0 24px;overflow-y:auto;}
+  .sidenav .brandmark{font-family:'Space Grotesk';font-weight:700;font-size:14px;letter-spacing:.02em;color:var(--blue-strong);margin-bottom:2px;}
+  .sidenav .brandsub{font-size:11.5px;color:var(--muted);margin-bottom:22px;letter-spacing:.02em;}
+  .sidenav nav a{display:block;font-size:13px;color:var(--ink-soft);padding:7px 12px 7px 14px;border-left:2px solid transparent;border-radius:0 6px 6px 0;transition:all .15s;}
+  .sidenav nav a:hover{color:var(--blue-strong);background:var(--tint);text-decoration:none;}
+  .sidenav nav a.active{color:var(--blue-strong);border-left-color:var(--blue);background:var(--tint);font-weight:500;}
+  .sidenav nav .grp{font-size:10.5px;text-transform:uppercase;letter-spacing:.13em;color:var(--muted);margin:18px 0 6px 14px;font-weight:600;}
+  @media (max-width:920px){ .sidenav{display:none;} }
+
+  main{padding-bottom:90px;min-width:0;}
+
+  /* ---------- hero ---------- */
+  .hero{position:relative;padding:64px 0 30px;}
+  .hero .eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--blue-strong);background:var(--blue-pale);border:1px solid var(--tint-deep);padding:6px 13px;border-radius:100px;}
+  .hero h1{font-size:clamp(30px,4.4vw,46px);font-weight:700;margin:22px 0 0;max-width:18ch;}
+  .hero h1 .accent{color:var(--blue);}
+  .hero .lede{font-size:18px;color:var(--ink-soft);max-width:60ch;margin:18px 0 0;}
+  .metarow{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px;}
+  .chip{font-family:'JetBrains Mono';font-size:12px;color:var(--steel);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 11px;box-shadow:var(--shadow-soft);}
+  .chip b{color:var(--blue-strong);font-weight:600;}
+  .branchmotif{position:absolute;right:-10px;top:54px;opacity:.85;pointer-events:none;}
+  @media (max-width:760px){ .branchmotif{display:none;} .hero{padding-top:42px;} }
+
+  /* ---------- generic section ---------- */
+  section{scroll-margin-top:24px;padding:30px 0;border-top:1px solid var(--line-soft);}
+  section:first-of-type{border-top:none;}
+  .sectlabel{font-size:11.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);margin-bottom:8px;display:flex;align-items:center;gap:10px;}
+  .sectlabel .num{font-family:'JetBrains Mono';color:var(--blue-bright);font-weight:500;}
+  h2.sect{font-size:clamp(22px,3vw,30px);font-weight:600;margin:0 0 6px;}
+  .sect-intro{color:var(--ink-soft);max-width:66ch;margin:0 0 22px;font-size:16.5px;}
+
+  /* ---------- callout / rule cards ---------- */
+  .rules{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:680px){ .rules{grid-template-columns:1fr;} }
+  .rule{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:22px 22px 20px;box-shadow:var(--shadow-soft);position:relative;overflow:hidden;}
+  .rule::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--blue-bright),var(--blue));}
+  .rule .rk{font-family:'JetBrains Mono';font-size:12px;color:var(--blue-strong);font-weight:600;letter-spacing:.03em;}
+  .rule h3{font-size:18px;margin:8px 0 8px;}
+  .rule p{margin:0;color:var(--ink-soft);font-size:14.5px;}
+  .rule p + p{margin-top:9px;}
+
+  /* ---------- architecture diagram ---------- */
+  .diagram{background:linear-gradient(180deg,#ffffff, #f7fbff);border:1px solid var(--line);border-radius:18px;padding:28px 26px 24px;box-shadow:var(--shadow);}
+  .planes{display:grid;grid-template-columns:1fr auto 1fr;align-items:stretch;gap:18px;}
+  @media (max-width:820px){ .planes{grid-template-columns:1fr;} }
+  .node{border-radius:13px;padding:18px 18px 16px;border:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow-soft);}
+  .node.write{border-color:var(--tint-deep);background:linear-gradient(180deg,#fbfdff,#eef5fd);}
+  .node.read{border-color:var(--tint-deep);background:linear-gradient(180deg,#fbfdff,#eef5fd);}
+  .node .ntag{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--blue);}
+  .node h4{font-size:16px;margin:7px 0 4px;}
+  .node .npath{font-family:'JetBrains Mono';font-size:12px;color:var(--steel);background:var(--slate-pale);border-radius:6px;padding:3px 7px;display:inline-block;margin:3px 0 9px;}
+  .node ul{margin:0;padding-left:17px;color:var(--ink-soft);font-size:13.5px;line-height:1.5;}
+  .node ul li{margin:3px 0;}
+  .corebox{display:flex;flex-direction:column;justify-content:center;min-width:172px;text-align:center;border-radius:13px;padding:20px 16px;background:linear-gradient(160deg,var(--blue-strong),#2a73b8);color:#fff;box-shadow:0 14px 30px -14px rgba(31,86,143,.6);}
+  .corebox .ctag{font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.85;font-weight:600;}
+  .corebox h4{color:#fff;font-size:19px;margin:6px 0 4px;}
+  .corebox .csub{font-size:12.5px;opacity:.9;line-height:1.45;}
+  .corebox .cport{font-family:'JetBrains Mono';font-size:11.5px;margin-top:9px;background:rgba(255,255,255,.14);border-radius:6px;padding:4px 8px;display:inline-block;}
+  .flowlabel{font-size:11.5px;color:var(--muted);text-align:center;font-style:italic;}
+  .storage{margin-top:18px;border-top:1px dashed var(--line);padding-top:16px;display:flex;align-items:center;gap:12px;justify-content:center;flex-wrap:wrap;}
+  .storage .sb{font-family:'JetBrains Mono';font-size:12px;color:var(--steel);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 12px;}
+  .arrowrow{display:none;}
+  @media (max-width:820px){
+    .arrowrow{display:block;text-align:center;color:var(--blue-bright);font-size:20px;line-height:1;margin:-4px 0;}
+  }
+
+  /* ---------- engine support blocks ---------- */
+  .enginehead{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:4px;}
+  .badge{font-family:'JetBrains Mono';font-size:12px;font-weight:600;padding:5px 11px;border-radius:7px;border:1px solid var(--tint-deep);background:var(--blue-pale);color:var(--blue-strong);}
+  .badge.rest{background:var(--steel-pale);color:var(--steel);border-color:#d9e0e8;}
+
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px;}
+  @media (max-width:720px){ .twocol{grid-template-columns:1fr;} }
+  .opcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 18px 8px;box-shadow:var(--shadow-soft);}
+  .opcard .ch{display:flex;align-items:center;gap:9px;font-weight:600;font-size:14px;font-family:'Space Grotesk';padding-bottom:10px;margin-bottom:6px;border-bottom:1px solid var(--line-soft);}
+  .opcard.yes .ch{color:var(--blue-strong);}
+  .opcard.no .ch{color:var(--steel);}
+  .dot{width:18px;height:18px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none;}
+  .dot.y{background:var(--blue);color:#fff;}
+  .dot.n{background:var(--slate-pale);color:var(--muted);border:1px solid var(--line);}
+  .opcard ul{list-style:none;margin:0;padding:0;}
+  .opcard li{padding:7px 0;border-bottom:1px solid var(--line-soft);font-size:14px;color:var(--ink-soft);display:flex;gap:10px;align-items:baseline;}
+  .opcard li:last-child{border-bottom:none;}
+  .opcard li .mk{font-family:'JetBrains Mono';font-size:11px;flex:none;margin-top:2px;}
+  .opcard.yes li .mk{color:var(--blue-bright);}
+  .opcard.no li .mk{color:var(--muted);}
+  .opcard li b{color:var(--ink);font-weight:600;}
+  .opcard li .why{display:block;font-size:12.5px;color:var(--muted);margin-top:1px;}
+
+  /* ---------- code ---------- */
+  .code{background:#102132;border-radius:12px;padding:16px 18px;overflow-x:auto;box-shadow:var(--shadow);margin:16px 0;border:1px solid #1c3consume;}
+  .code{border:1px solid #1b3247;}
+  .code pre{margin:0;font-family:'JetBrains Mono';font-size:12.7px;line-height:1.62;color:#cfe2f4;}
+  .code .cm{color:#6f93b5;}
+  .code .k{color:#7fc4ff;}
+  .code .s{color:#9fe0b0;}
+  .code .p{color:#e6b96b;}
+  .codecap{font-size:12px;color:var(--muted);margin:-6px 0 16px;font-family:'JetBrains Mono';}
+  code.inl{background:var(--slate-pale);border:1px solid var(--line-soft);border-radius:5px;padding:1px 6px;font-size:12.8px;color:var(--blue-strong);}
+
+  /* ---------- matrix ---------- */
+  .filterbar{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 16px;align-items:center;}
+  .filterbar .flabel{font-size:12px;color:var(--muted);margin-right:4px;font-weight:500;}
+  .fbtn{font-family:'Inter';font-size:13px;font-weight:500;color:var(--ink-soft);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 13px;cursor:pointer;transition:all .15s;}
+  .fbtn:hover{border-color:var(--blue-bright);color:var(--blue-strong);}
+  .fbtn.on{background:var(--blue);border-color:var(--blue);color:#fff;}
+  .matrix{width:100%;border-collapse:separate;border-spacing:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-soft);}
+  .matrix th,.matrix td{text-align:left;padding:12px 15px;font-size:14px;border-bottom:1px solid var(--line-soft);vertical-align:top;}
+  .matrix thead th{background:var(--tint);color:var(--blue-strong);font-family:'Space Grotesk';font-weight:600;font-size:12.5px;letter-spacing:.02em;position:sticky;top:0;}
+  .matrix thead th:nth-child(2),.matrix thead th:nth-child(3){text-align:center;width:140px;}
+  .matrix td:nth-child(2),.matrix td:nth-child(3){text-align:center;}
+  .matrix tbody tr:last-child td{border-bottom:none;}
+  .matrix tbody tr:hover{background:#f7fbff;}
+  .matrix .opname{font-weight:600;color:var(--ink);}
+  .matrix .opname code{font-family:'JetBrains Mono';font-size:12.5px;color:var(--blue-strong);background:none;padding:0;}
+  .matrix .opnote{display:block;font-size:12.5px;color:var(--muted);font-weight:400;margin-top:2px;}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;font-family:'JetBrains Mono';padding:4px 9px;border-radius:100px;white-space:nowrap;}
+  .pill.y{background:var(--blue-pale);color:var(--blue-strong);}
+  .pill.n{background:var(--slate-pale);color:var(--muted);}
+  .pill.c{background:var(--steel-pale);color:var(--steel);}
+  .matrix-scroll{overflow-x:auto;}
+
+  /* ---------- gotchas ---------- */
+  .gotchas{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:720px){ .gotchas{grid-template-columns:1fr;} }
+  .gotcha{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--steel);border-radius:11px;padding:17px 18px;box-shadow:var(--shadow-soft);}
+  .gotcha h4{font-size:15px;margin:0 0 6px;display:flex;align-items:center;gap:9px;}
+  .gotcha h4 .gi{font-family:'JetBrains Mono';font-size:12px;color:#fff;background:var(--steel);border-radius:5px;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;flex:none;font-weight:700;}
+  .gotcha p{margin:0;font-size:13.7px;color:var(--ink-soft);}
+  .gotcha p code{font-size:12.3px;}
+
+  /* ---------- workflow steps ---------- */
+  .steps{counter-reset:s;display:grid;gap:12px;margin-top:8px;}
+  .step{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow-soft);}
+  .step .sn{counter-increment:s;font-family:'Space Grotesk';font-weight:700;font-size:15px;color:#fff;background:linear-gradient(160deg,var(--blue),var(--blue-strong));width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;}
+  .step .sn::before{content:counter(s);}
+  .step h4{margin:2px 0 4px;font-size:15px;}
+  .step p{margin:0;font-size:13.8px;color:var(--ink-soft);}
+  .step p code{font-size:12.3px;}
+
+  /* ---------- recommendation ---------- */
+  .reco{background:linear-gradient(150deg,#ffffff,#eef5fd);border:1px solid var(--tint-deep);border-radius:18px;padding:26px 26px 22px;box-shadow:var(--shadow);}
+  .reco h3{font-size:19px;margin:0 0 12px;color:var(--blue-strong);}
+  .reco ul{margin:0;padding-left:0;list-style:none;}
+  .reco li{padding:9px 0;border-bottom:1px solid var(--line-soft);display:flex;gap:12px;align-items:baseline;font-size:15px;color:var(--ink-soft);}
+  .reco li:last-child{border-bottom:none;}
+  .reco li .arw{color:var(--blue);font-weight:700;flex:none;}
+  .reco li b{color:var(--ink);}
+
+  /* ---------- footer ---------- */
+  footer{border-top:1px solid var(--line);margin-top:30px;padding:26px 0 60px;color:var(--muted);font-size:13px;}
+  footer .fmeta{display:flex;flex-wrap:wrap;gap:18px;justify-content:space-between;align-items:center;}
+  footer code{font-size:12px;}
+
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin:14px 0 0;font-size:12.5px;color:var(--ink-soft);}
+  .legend span{display:inline-flex;align-items:center;gap:7px;}
+
+  @media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto;} *{transition:none !important;} }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidenav">
+    <div class="brandmark">NESSIE 0.107 · OPS</div>
+    <div class="brandsub">Spark (native) · Starburst (REST)</div>
+    <nav id="toc">
+      <a href="#overview">Overview</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#rules">Two governing rules</a>
+      <div class="grp">By engine</div>
+      <a href="#spark">Spark — native catalog</a>
+      <a href="#starburst">Starburst — Iceberg REST</a>
+      <div class="grp">Reference</div>
+      <a href="#matrix">Side-by-side matrix</a>
+      <a href="#gotchas">Operational gotchas</a>
+      <a href="#workflow">Branch workflow</a>
+      <a href="#reco">Recommendations</a>
+    </nav>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main>
+    <!-- HERO -->
+    <header class="hero" id="overview">
+      <svg class="branchmotif" width="190" height="150" viewBox="0 0 190 150" fill="none" aria-hidden="true">
+        <path d="M30 18 V132" stroke="#2f6fb3" stroke-width="2.5"/>
+        <path d="M30 56 C30 80, 130 64, 130 92" stroke="#4f8fd6" stroke-width="2.5" fill="none"/>
+        <path d="M30 92 C30 112, 100 108, 100 128" stroke="#9bbfe3" stroke-width="2.5" fill="none"/>
+        <circle cx="30" cy="18" r="6.5" fill="#1f568f"/>
+        <circle cx="30" cy="56" r="6.5" fill="#2f6fb3"/>
+        <circle cx="30" cy="92" r="6.5" fill="#2f6fb3"/>
+        <circle cx="30" cy="132" r="6.5" fill="#2f6fb3"/>
+        <circle cx="130" cy="92" r="6.5" fill="#4f8fd6"/>
+        <circle cx="100" cy="128" r="6.5" fill="#9bbfe3"/>
+        <text x="44" y="22" font-family="JetBrains Mono" font-size="10" fill="#6b7888">main</text>
+        <text x="143" y="96" font-family="JetBrains Mono" font-size="10" fill="#6b7888">audit</text>
+        <text x="112" y="132" font-family="JetBrains Mono" font-size="10" fill="#9bbfe3">dev</text>
+      </svg>
+
+      <span class="eyebrow">Production catalog reference · v0.107.x</span>
+      <h1>What you <span class="accent">can</span> and <span class="accent">can't</span> do on Nessie with Spark &amp; Starburst</h1>
+      <p class="lede">A precise operations map for a multi-tenant Iceberg lakehouse where Apache&nbsp;Spark and dbt write through Nessie's <b>native catalog</b>, and Starburst&nbsp;/&nbsp;Trino reads and serves through the <b>Iceberg REST</b> endpoint — both backed by one Nessie&nbsp;0.107 server on Kubernetes.</p>
+      <div class="metarow">
+        <span class="chip">Nessie <b>0.107.x</b></span>
+        <span class="chip">Iceberg <b>1.11</b> runtime</span>
+        <span class="chip">Spark via <b>NessieCatalog</b> · /api/v2</span>
+        <span class="chip">Starburst via <b>REST</b> · /iceberg/&lt;branch&gt;/</span>
+        <span class="chip">Storage <b>StorageGRID (S3)</b></span>
+        <span class="chip">IdP <b>Keycloak</b></span>
+      </div>
+      <div class="legend">
+        <span><span class="pill y">Supported</span> available as a first-class operation</span>
+        <span><span class="pill c">Conditional</span> works with a constraint or workaround</span>
+        <span><span class="pill n">Not&nbsp;supported</span> must be done elsewhere</span>
+      </div>
+    </header>
+
+    <!-- ARCHITECTURE -->
+    <section id="architecture">
+      <div class="sectlabel"><span class="num">A</span> The shape of your deployment</div>
+      <h2 class="sect">One Nessie, two front doors</h2>
+      <p class="sect-intro">Spark and Starburst talk to the <em>same</em> Nessie repository, but through different APIs. That single fact explains every asymmetry in this document: the API surface each engine uses determines which operations it can express.</p>
+
+      <div class="diagram">
+        <div class="planes">
+          <div class="node write">
+            <div class="ntag">Write &amp; versioning plane</div>
+            <h4>Apache Spark · dbt</h4>
+            <span class="npath">catalog-impl = NessieCatalog · /api/v2</span>
+            <ul>
+              <li>Table + namespace DDL/DML</li>
+              <li>Branch / tag lifecycle &amp; merge</li>
+              <li>Write-Audit-Publish isolation</li>
+              <li>Multi-table atomic commits</li>
+            </ul>
+          </div>
+
+          <div class="arrowrow">&#8595;</div>
+
+          <div class="corebox">
+            <div class="ctag">Catalog</div>
+            <h4>Nessie 0.107</h4>
+            <div class="csub">Version store on PostgreSQL · Kubernetes</div>
+            <span class="cport">:19120 · /api/v2 + /iceberg</span>
+          </div>
+
+          <div class="arrowrow">&#8593;</div>
+
+          <div class="node read">
+            <div class="ntag">Read &amp; serve plane</div>
+            <h4>Starburst · Trino</h4>
+            <span class="npath">iceberg.catalog.type = rest · /iceberg/&lt;branch&gt;/</span>
+            <ul>
+              <li>SELECT, BI &amp; ad-hoc analytics</li>
+              <li>INSERT / UPDATE / DELETE / MERGE</li>
+              <li>Views (Iceberg View spec)</li>
+              <li>Reads the branch in its URI prefix</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="storage">
+          <span class="flowlabel">Both planes share one warehouse &amp; one commit history</span>
+          <span class="sb">NetApp StorageGRID · S3</span>
+          <span class="sb">Keycloak · OAuth2</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- RULES -->
+    <section id="rules">
+      <div class="sectlabel"><span class="num">B</span> Read this first</div>
+      <h2 class="sect">Two rules that govern everything below</h2>
+      <p class="sect-intro">Almost every "why can't Starburst do X?" question collapses into one of these two distinctions. Internalise them and the matrices become predictable.</p>
+      <div class="rules">
+        <div class="rule">
+          <div class="rk">RULE 1</div>
+          <h3>Nessie refs ≠ Iceberg table refs</h3>
+          <p>Nessie branches and tags are <b>catalog-wide</b>, Git-like, and can carry multi-table atomic commits. Iceberg branches/tags live <b>inside a single table's</b> metadata as snapshot references.</p>
+          <p>When a Trino doc says it "supports branching and tagging," it means the <b>table-level</b> Iceberg kind — never Nessie's catalog versioning. Don't conflate them.</p>
+        </div>
+        <div class="rule">
+          <div class="rk">RULE 2</div>
+          <h3>Native API ≠ Iceberg REST</h3>
+          <p>The Git-like Nessie SQL extensions (<code class="inl">CREATE BRANCH … IN nessie</code>, <code class="inl">MERGE BRANCH</code>, <code class="inl">USE REFERENCE</code>) only exist on the <b>native NessieCatalog</b> path used by Spark.</p>
+          <p>Over the <b>Iceberg REST</b> endpoint that Starburst uses, those statements don't exist. REST gains <b>views</b> in exchange, and pins its branch by the <b>URI path prefix</b>.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SPARK -->
+    <section id="spark">
+      <div class="sectlabel"><span class="num">C</span> Engine deep-dive</div>
+      <div class="enginehead">
+        <h2 class="sect">Spark &amp; dbt</h2>
+        <span class="badge">native · org.apache.iceberg.nessie.NessieCatalog</span>
+      </div>
+      <p class="sect-intro">The full-capability path. With the Iceberg 1.11 runtime plus <code class="inl">nessie-spark-extensions-*:0.107.x</code> and both Iceberg and Nessie session extensions registered, Spark is where all versioning happens.</p>
+
+      <div class="twocol">
+        <div class="opcard yes">
+          <div class="ch"><span class="dot y">&#10003;</span> Supported</div>
+          <ul>
+            <li><span class="mk">DDL</span><span><b>CREATE / REPLACE / DROP TABLE</b>, CTAS, full schema &amp; partition evolution, table properties.</span></li>
+            <li><span class="mk">NS</span><span><b>CREATE / DROP NAMESPACE</b> — Nessie requires namespaces to exist before tables are created in them.</span></li>
+            <li><span class="mk">DML</span><span><b>INSERT, INSERT OVERWRITE, MERGE INTO, UPDATE, DELETE</b> — copy-on-write and merge-on-read.</span></li>
+            <li><span class="mk">REF</span><span><b>CREATE / DROP BRANCH &amp; TAG, ASSIGN, MERGE BRANCH</b> (with <code class="inl">DRY</code> / <code class="inl">BEHAVIOR</code>), <b>LIST REFERENCES, SHOW REFERENCE, SHOW LOG, USE REFERENCE</b>.</span></li>
+            <li><span class="mk">@ref</span><span>Reference-scoped access via <code class="inl">table@branch</code> and <code class="inl">table#commitHash</code>.</span></li>
+            <li><span class="mk">WAP</span><span>Branch &rarr; batch of commits &rarr; atomic <b>merge back to main</b> (Write-Audit-Publish, approximate multi-table transaction).</span></li>
+            <li><span class="mk">META</span><span>Metadata tables: <code class="inl">$snapshots</code>, <code class="inl">$history</code>, <code class="inl">$files</code>, <code class="inl">$manifests</code>, <code class="inl">$refs</code>, <code class="inl">$partitions</code>.</span></li>
+          </ul>
+        </div>
+        <div class="opcard no">
+          <div class="ch"><span class="dot n">&#10007;</span> Not supported / sharp edges</div>
+          <ul>
+            <li><span class="mk">GC</span><span><b>Naive <code class="inl">expire_snapshots</code> / <code class="inl">remove_orphan_files</code> is unsafe.</b><span class="why">A snapshot referenced from another branch can be broken. Use the branch-aware <b>Nessie GC tool</b> for retention &amp; sweep.</span></span></li>
+            <li><span class="mk">TT</span><span><b>Prefer Nessie commit time-travel over Iceberg <code class="inl">TIMESTAMP AS OF</code></b><span class="why">Nessie history is consistent across the whole repo; per-table Iceberg time-travel is not.</span></span></li>
+            <li><span class="mk">VIEW</span><span><b>Iceberg views are uneven on the native path</b><span class="why">The Nessie model supports views, but native-catalog view handling lags REST — validate before relying on it.</span></span></li>
+            <li><span class="mk">REST</span><span><b>If Spark moves to the REST endpoint, it loses the Nessie SQL extensions</b><span class="why">Branch DDL is a native-catalog feature only — same trade-off Starburst already lives with.</span></span></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="code" role="img" aria-label="Spark native Nessie catalog configuration">
+<pre><span class="cm"># Spark — native NessieCatalog (full Git-like SQL)</span>
+spark.sql.catalog.nessie                = org.apache.iceberg.spark.<span class="k">SparkCatalog</span>
+spark.sql.catalog.nessie.catalog-impl   = org.apache.iceberg.nessie.<span class="k">NessieCatalog</span>
+spark.sql.catalog.nessie.uri            = <span class="s">https://nessie:19120/api/v2</span>
+spark.sql.catalog.nessie.ref            = <span class="s">main</span>
+spark.sql.catalog.nessie.warehouse      = <span class="s">s3://lakehouse/</span>
+spark.sql.catalog.nessie.authentication.type = <span class="p">OAUTH2</span>
+spark.sql.extensions = org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions,
+                       org.projectnessie.spark.extensions.<span class="k">NessieSparkSessionExtensions</span></pre>
+      </div>
+      <div class="codecap">// the NessieSparkSessionExtensions line is what unlocks CREATE BRANCH / MERGE BRANCH</div>
+    </section>
+
+    <!-- STARBURST -->
+    <section id="starburst">
+      <div class="sectlabel"><span class="num">D</span> Engine deep-dive</div>
+      <div class="enginehead">
+        <h2 class="sect">Starburst &amp; Trino</h2>
+        <span class="badge rest">REST · iceberg.catalog.type = rest</span>
+      </div>
+      <p class="sect-intro">Your read/serve plane. The data-plane is full-featured — but catalog versioning is effectively read-only, the branch is pinned by the URI prefix, and a few platform constraints land specifically on a StorageGRID + Keycloak deployment.</p>
+
+      <div class="twocol">
+        <div class="opcard yes">
+          <div class="ch"><span class="dot y">&#10003;</span> Supported over REST</div>
+          <ul>
+            <li><span class="mk">READ</span><span><b>SELECT</b> and all read statements, predicate &amp; dynamic filtering.</span></li>
+            <li><span class="mk">DML</span><span><b>INSERT, UPDATE, DELETE, MERGE, TRUNCATE</b> — copy-on-write &amp; merge-on-read via <code class="inl">merge_mode</code>.</span></li>
+            <li><span class="mk">DDL</span><span><b>CREATE TABLE / CTAS, DROP TABLE, ALTER TABLE, CREATE / DROP SCHEMA, COMMENT</b>.</span></li>
+            <li><span class="mk">VIEW</span><span><b>CREATE / DROP VIEW</b> via the Iceberg View spec — <em>gained</em> on REST (the native <code class="inl">nessie</code> type can't do views at all).</span></li>
+            <li><span class="mk">TT</span><span>Time travel with <code class="inl">FOR TIMESTAMP AS OF</code> / <code class="inl">FOR VERSION AS OF</code> — Nessie returns one consistent snapshot.</span></li>
+            <li><span class="mk">TREF</span><span>Iceberg <b>table-level</b> branches/tags (<code class="inl">CREATE BRANCH … IN TABLE</code>) and the <code class="inl">$refs</code> metadata table.</span></li>
+            <li><span class="mk">OPT</span><span>Maintenance procedures: <code class="inl">optimize</code>, <code class="inl">expire_snapshots</code>, <code class="inl">remove_orphan_files</code>.</span></li>
+          </ul>
+        </div>
+        <div class="opcard no">
+          <div class="ch"><span class="dot n">&#10007;</span> Not supported over REST</div>
+          <ul>
+            <li><span class="mk">BR</span><span><b>Nessie catalog branch/tag DDL from SQL</b><span class="why">No <code class="inl">CREATE / MERGE / DROP BRANCH IN nessie</code> from Trino. Do it in Spark or the Nessie CLI.</span></span></li>
+            <li><span class="mk">USE</span><span><b>Runtime ref switching via SQL</b><span class="why">The active branch is the URI path prefix <code class="inl">/iceberg/&lt;branch&gt;/</code>. A second branch = a second catalog definition.</span></span></li>
+            <li><span class="mk">MV</span><span><b>Materialized views</b><span class="why">REST &amp; Nessie catalogs don't support MVs — also rules out SEP Data Products built as MVs.</span></span></li>
+            <li><span class="mk">SNAP</span><span><b>Multi-snapshot semantics differ</b><span class="why">Nessie deliberately returns table state as a <em>single</em> snapshot to preserve cross-branch isolation, so some Iceberg snapshot-history operations behave differently.</span></span></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="code" role="img" aria-label="Starburst Trino Iceberg REST catalog configuration for Nessie">
+<pre><span class="cm"># Starburst / Trino — Nessie via Iceberg REST (nessie.properties)</span>
+connector.name                        = iceberg
+iceberg.catalog.type                  = <span class="k">rest</span>
+iceberg.rest-catalog.uri              = <span class="s">https://nessie:19120/iceberg/main/</span>   <span class="cm"># branch = path prefix</span>
+iceberg.rest-catalog.warehouse        = <span class="s">s3://lakehouse/</span>
+iceberg.rest-catalog.oauth2.token     = <span class="p">${KEYCLOAK_TOKEN}</span>            <span class="cm"># Trino needs a supplied OAuth2 token</span>
+iceberg.rest-catalog.vended-credentials-enabled = <span class="k">true</span>     <span class="cm"># or configure S3 signing</span>
+fs.native-s3.enabled                  = <span class="k">true</span>
+s3.endpoint                           = <span class="s">https://storagegrid.internal</span>
+s3.path-style-access                  = <span class="k">true</span></pre>
+      </div>
+      <div class="codecap">// to serve a second branch, define a second catalog pointed at /iceberg/&lt;other-branch&gt;/ — Nessie can even generate this template via its /iceberg/v1-clients/trino endpoint</div>
+    </section>
+
+    <!-- MATRIX -->
+    <section id="matrix">
+      <div class="sectlabel"><span class="num">E</span> The money table</div>
+      <h2 class="sect">Side-by-side capability matrix</h2>
+      <p class="sect-intro">Every operation, both engines, one view. <b>Spark</b> = native catalog · <b>Starburst</b> = Iceberg REST. Filter to spot the asymmetries fast.</p>
+
+      <div class="filterbar">
+        <span class="flabel">Show:</span>
+        <button class="fbtn on" data-f="all">All</button>
+        <button class="fbtn" data-f="diff">Where they differ</button>
+        <button class="fbtn" data-f="no">Anything blocked</button>
+      </div>
+
+      <div class="matrix-scroll">
+      <table class="matrix">
+        <thead>
+          <tr><th>Operation</th><th>Spark (native)</th><th>Starburst (REST)</th></tr>
+        </thead>
+        <tbody id="mbody">
+          <tr data-spark="y" data-star="y"><td class="opname">SELECT &amp; reads<span class="opnote">predicate / dynamic filtering</span></td><td><span class="pill y">Yes</span></td><td><span class="pill y">Yes</span></td></tr>
+          <tr data-spark="y" data-star="y"><td class="opname">INSERT / UPDATE / DELETE / MERGE<span class="opnote">COW &amp; MOR</span></td><td><span class="pill y">Yes</span></td><td><span class="pill y">Yes</span></td></tr>
+          <tr data-spark="y" data-star="y"><td class="opname">CREATE / DROP TABLE, CTAS, ALTER<span class="opnote">schema &amp; property changes</span></td><td><span class="pill y">Yes</span></td><td><span class="pill y">Yes</span></td></tr>
+          <tr data-spark="y" data-star="y"><td class="opname">CREATE / DROP SCHEMA &amp; namespace</td><td><span class="pill y">Yes</span></td><td><span class="pill y">Yes</span></td></tr>
+          <tr data-spark="c" data-star="y"><td class="opname">CREATE / DROP VIEW<span class="opnote">Iceberg View spec</span></td><td><span class="pill c">Uneven</span></td><td><span class="pill y">Yes</span></td></tr>
+          <tr data-spark="n" data-star="n"><td class="opname">Materialized views</td><td><span class="pill n">No</span></td><td><span class="pill n">No</span></td></tr>
+          <tr data-spark="y" data-star="y"><td class="opname">Time travel <code>AS OF</code> timestamp / version</td><td><span class="pill y">Yes</span></td><td><span class="pill y">Yes</span></td></tr>
+          <tr data-spark="y" data-star="y"><td class="opname">Iceberg <em>table-level</em> branch / tag<span class="opnote">CREATE BRANCH … IN TABLE</span></td><td><span class="pill y">Yes</span></td><td><span class="pill y">Yes</span></td></tr>
+          <tr data-spark="y" data-star="n"><td class="opname">Nessie <em>catalog</em> branch / tag — create, drop<span class="opnote">CREATE BRANCH … IN nessie</span></td><td><span class="pill y">Yes</span></td><td><span class="pill n">No</span></td></tr>
+          <tr data-spark="y" data-star="n"><td class="opname">Nessie <code>MERGE BRANCH</code> / WAP merge</td><td><span class="pill y">Yes</span></td><td><span class="pill n">No</span></td></tr>
+          <tr data-spark="y" data-star="c"><td class="opname">Switch active Nessie ref<span class="opnote">branch a query runs against</span></td><td><span class="pill y">USE REFERENCE</span></td><td><span class="pill c">URI prefix</span></td></tr>
+          <tr data-spark="y" data-star="n"><td class="opname">Reference-scoped <code>table@branch</code> syntax</td><td><span class="pill y">Yes</span></td><td><span class="pill n">No</span></td></tr>
+          <tr data-spark="y" data-star="y"><td class="opname">Multi-table atomic commit<span class="opnote">via a branch + merge</span></td><td><span class="pill y">Author</span></td><td><span class="pill c">Consume</span></td></tr>
+          <tr data-spark="c" data-star="y"><td class="opname">Snapshot expiry / orphan cleanup</td><td><span class="pill c">Use Nessie GC</span></td><td><span class="pill y">Procedures</span></td></tr>
+          <tr data-spark="y" data-star="y"><td class="opname">Metadata tables <code>$snapshots</code>, <code>$refs</code>…</td><td><span class="pill y">Yes</span></td><td><span class="pill y">Yes</span></td></tr>
+        </tbody>
+      </table>
+      </div>
+    </section>
+
+    <!-- GOTCHAS -->
+    <section id="gotchas">
+      <div class="sectlabel"><span class="num">F</span> Things that bite in production</div>
+      <h2 class="sect">Operational gotchas for your stack</h2>
+      <p class="sect-intro">These aren't operation-support gaps — they're configuration realities that come specifically from running Starburst-over-REST against Nessie on StorageGRID with Keycloak.</p>
+      <div class="gotchas">
+        <div class="gotcha">
+          <h4><span class="gi">1</span> Trino needs a real OAuth2 token</h4>
+          <p>Trino can't drive Nessie's OAuth client-id/secret flow itself. It expects a standard OAuth2 server — your <b>Keycloak</b> qualifies — and you must hand it a token via <code class="inl">iceberg.rest-catalog.oauth2.token</code>. Plan token rotation/refresh accordingly.</p>
+        </div>
+        <div class="gotcha">
+          <h4><span class="gi">2</span> S3 only, vending mandatory</h4>
+          <p>Trino-over-REST is validated for <b>S3</b> and doesn't do S3 request signing, so you must enable credential <b>vending</b> (STS) or Nessie-side signing, plus <code class="inl">fs.native-s3.enabled=true</code> and <code class="inl">path-style-access</code> for StorageGRID.</p>
+        </div>
+        <div class="gotcha">
+          <h4><span class="gi">3</span> Branch GC is not optional discipline</h4>
+          <p>Because snapshots can be shared across branches, table-level expiry can corrupt history. Run the <b>Nessie GC tool</b> (mark-and-sweep, branch-aware) on a schedule — never let an unguarded <code class="inl">expire_snapshots</code> run as routine maintenance.</p>
+        </div>
+        <div class="gotcha">
+          <h4><span class="gi">4</span> One branch per catalog on the read side</h4>
+          <p>Starburst sees exactly the branch in its URI prefix. Exposing <code class="inl">dev</code> / <code class="inl">audit</code> branches to BI means <b>declaring extra catalogs</b>, each pinned to a ref — there's no per-session branch switch in SQL.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- WORKFLOW -->
+    <section id="workflow">
+      <div class="sectlabel"><span class="num">G</span> How a branch actually flows</div>
+      <h2 class="sect">Branch lifecycle across both engines</h2>
+      <p class="sect-intro">A typical Write-Audit-Publish cycle in this split architecture. Note that authorship lives entirely on the Spark side; Starburst only ever consumes the result.</p>
+      <div class="steps">
+        <div class="step"><span class="sn"></span><div><h4>Create the branch — Spark or Nessie CLI</h4><p><code class="inl">CREATE BRANCH etl_run FROM main IN nessie</code>. Starburst cannot do this; it has no catalog-branch DDL.</p></div></div>
+        <div class="step"><span class="sn"></span><div><h4>Write &amp; transform in isolation — Spark / dbt</h4><p>Run the ETL against <code class="inl">etl_run</code>. Downstream consumers on <code class="inl">main</code> see nothing yet. Multiple tables can change as one logical unit.</p></div></div>
+        <div class="step"><span class="sn"></span><div><h4>Audit on the branch — Starburst (optional)</h4><p>Point a dedicated REST catalog at <code class="inl">/iceberg/etl_run/</code> and let analysts validate with normal SQL before anything ships.</p></div></div>
+        <div class="step"><span class="sn"></span><div><h4>Publish — Spark</h4><p><code class="inl">MERGE BRANCH etl_run INTO main IN nessie</code>. The whole change set lands on <code class="inl">main</code> atomically as one fast-forward.</p></div></div>
+        <div class="step"><span class="sn"></span><div><h4>Serve — Starburst on main</h4><p>BI catalog pinned to <code class="inl">/iceberg/main/</code> now sees the published state. Drop <code class="inl">etl_run</code> from Spark when done.</p></div></div>
+      </div>
+    </section>
+
+    <!-- RECO -->
+    <section id="reco">
+      <div class="sectlabel"><span class="num">H</span> What to take away</div>
+      <h2 class="sect">Recommendations</h2>
+      <div class="reco">
+        <h3>For this Spark-native + Starburst-REST topology</h3>
+        <ul>
+          <li><span class="arw">&rarr;</span><span><b>Keep authorship on Spark.</b> All branch/tag/merge and WAP logic belongs to the native path. Treat Starburst as strictly a consumer of refs it can't mutate.</span></li>
+          <li><span class="arw">&rarr;</span><span><b>Model branch exposure as catalogs, not commands.</b> Decide up front which Nessie refs BI users may query and declare one REST catalog per ref. Automate generation from Nessie's Trino client-template endpoint.</span></li>
+          <li><span class="arw">&rarr;</span><span><b>Views are a genuine REST win.</b> If you need governed SQL views for tenants, the REST path supports them where the native <code class="inl">nessie</code> catalog type never could — lean into that.</span></li>
+          <li><span class="arw">&rarr;</span><span><b>Treat GC as a platform service.</b> Schedule the Nessie GC tool centrally; forbid ad-hoc snapshot expiry in tenant jobs. This is the most common way a branched catalog gets quietly corrupted.</span></li>
+          <li><span class="arw">&rarr;</span><span><b>Justify Nessie by the branching.</b> The whole reason to carry Nessie's operational cost is catalog-level branching / multi-table commits. If every consumer only ever reads <code class="inl">main</code> and you never branch, a plainer REST catalog deserves a fair hearing.</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap" style="padding:0;">
+        <div class="fmeta">
+          <span>Operations reference · Apache Nessie <code>0.107.x</code> · Iceberg <code>1.11</code> · Spark native &amp; Trino/Starburst REST</span>
+          <span>Verify against your exact engine versions before rollout — REST view &amp; OAuth behaviour tracks Trino releases.</span>
+        </div>
+      </div>
+    </footer>
+  </main>
+</div>
+
+<script>
+  // active section highlight in side nav
+  (function(){
+    var links = Array.prototype.slice.call(document.querySelectorAll('#toc a'));
+    var map = {};
+    links.forEach(function(a){ var id=a.getAttribute('href').slice(1); map[id]=a; });
+    var sections = links.map(function(a){ return document.getElementById(a.getAttribute('href').slice(1)); }).filter(Boolean);
+    function onScroll(){
+      var pos = window.scrollY + 120, current = null;
+      sections.forEach(function(s){ if(s.offsetTop <= pos) current = s.id; });
+      links.forEach(function(a){ a.classList.remove('active'); });
+      if(current && map[current]) map[current].classList.add('active');
+    }
+    window.addEventListener('scroll', onScroll, {passive:true});
+    onScroll();
+  })();
+
+  // matrix filter
+  (function(){
+    var btns = Array.prototype.slice.call(document.querySelectorAll('.fbtn'));
+    var rows = Array.prototype.slice.call(document.querySelectorAll('#mbody tr'));
+    function apply(f){
+      rows.forEach(function(r){
+        var sp = r.getAttribute('data-spark'), st = r.getAttribute('data-star');
+        var show = true;
+        if(f === 'diff') show = (sp !== st);
+        else if(f === 'no') show = (sp === 'n' || st === 'n' || sp === 'c' || st === 'c');
+        r.style.display = show ? '' : 'none';
+      });
+    }
+    btns.forEach(function(b){
+      b.addEventListener('click', function(){
+        btns.forEach(function(x){ x.classList.remove('on'); });
+        b.classList.add('on');
+        apply(b.getAttribute('data-f'));
+      });
+    });
+  })();
+</script>
+</body>
+</html>
